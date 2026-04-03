@@ -1,0 +1,12 @@
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const passport = require('passport');
+const path = require('path');
+const i18n = require('i18n');
+const cookieParser = require('cookie-parser');
+const compression = require('compression');
+require('dotenv').config();
