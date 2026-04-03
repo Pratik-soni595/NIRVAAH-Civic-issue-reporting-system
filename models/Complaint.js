@@ -123,7 +123,7 @@ complaintSchema.index({ createdAt: -1 });
 // ====================
 // PRIORITY SCORE COMPUTATION
 // ====================
-complaintSchema.methods.computePriorityScore = function() {
+complaintSchema.methods.computePriorityScore = function () {
   const severityMap = { low: 1, medium: 2, high: 3, critical: 5 };
   const statusBonus = this.status === 'pending' ? 2 : 0;
   this.priorityScore = (this.voteCount * 2) + (severityMap[this.priority] * 10) + statusBonus;

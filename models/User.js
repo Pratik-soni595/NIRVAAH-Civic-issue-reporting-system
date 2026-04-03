@@ -39,6 +39,21 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0 // Gamification score
   },
+  wardNo: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  address: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  pincode: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   complaintsCount: {
     type: Number,
     default: 0
@@ -61,7 +76,7 @@ const userSchema = new mongoose.Schema({
 // ====================
 // HASH PASSWORD BEFORE SAVE
 // ====================
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
@@ -71,14 +86,14 @@ userSchema.pre('save', async function(next) {
 // ====================
 // COMPARE PASSWORD METHOD
 // ====================
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // ====================
 // GENERATE JWT
 // ====================
-userSchema.methods.generateJWT = function() {
+userSchema.methods.generateJWT = function () {
   const jwt = require('jsonwebtoken');
   return jwt.sign(
     { id: this._id, role: this.role },
