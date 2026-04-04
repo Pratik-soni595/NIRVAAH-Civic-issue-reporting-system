@@ -20,6 +20,7 @@ const protect = (req, res, next) => {
       });
     }
     req.user = user;
+    req.accountType = info?.accountType || user?.accountType || user?.role || 'citizen';
     next();
   })(req, res, next);
 };
