@@ -1,0 +1,101 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/admin-navbar') %>
+
+<div style="display:flex;min-height:100vh;padding-top:72px">
+  <%- include('../partials/admin-sidebar', {navPage}) %>
+
+  <div class="admin-main">
+    <div class="d-flex align-center justify-between mb-3 flex-wrap gap-2">
+      <div><h1 style="font-size:1.75rem" data-i18n="allComplaintsTitle"><%= __('allComplaintsTitle') %></h1><p class="text-muted" id="rCount" data-i18n="loading"><%= __('loading') %></p></div>
+    </div>
+
+    <div class="filter-bar">
+      <input type="text" id="search" data-i18n-placeholder="searchTitlePlaceholder" placeholder="<%= __('searchTitlePlaceholder') %>" oninput="debounce()" style="min-width:200px; padding:8px 12px; border:1px solid var(--border, #ccc); border-radius:6px; outline:none;">
+      <select id="catF" onchange="load()" style="padding:8px 12px; border:1px solid var(--border, #ccc); border-radius:6px; outline:none; background:var(--bg, #fff); cursor:pointer;">
+        <option value="" data-i18n="allCategories"><%= __('allCategories') %></option>
+        <% [['pothole',__('catPothole')],['garbage',__('catGarbage')],['water_leakage',__('catWaterLeak')],['electricity',__('catElectricity')],['road_damage',__('catRoadDamage')],['street_light',__('catStreetLight')],['sewage',__('catSewage')],['other',__('catOther')]].forEach(([v,l])=>{ %>
+          <option value="<%= v %>"><%= l %></option>
+        <% }) %>
+      </select>
+      <select id="statF" onchange="load()" style="padding:8px 12px; border:1px solid var(--border, #ccc); border-radius:6px; outline:none; background:var(--bg, #fff); cursor:pointer;">
+        <option value="" data-i18n="allStatuses"><%= __('allStatuses') %></option>
+        <option value="pending"><%= __('pending') %></option>
+        <option value="in_progress"><%= __('inProgress') %></option>
+        <option value="resolved"><%= __('resolved') %></option>
+      </select>
+      <select id="priF" onchange="load()" style="padding:8px 12px; border:1px solid var(--border, #ccc); border-radius:6px; outline:none; background:var(--bg, #fff); cursor:pointer;">
+        <option value="" data-i18n="allPriorities"><%= __('allPriorities') %></option>
+        <option value="critical"><%= __('priCritical') %></option>
+        <option value="high"><%= __('priHigh') %></option>
+        <option value="medium"><%= __('priMedium') %></option>
+        <option value="low"><%= __('priLow') %></option>
+      </select>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th style="width:22%" data-i18n="thTitle"><%= __('thTitle') %></th><th data-i18n="thCategory"><%= __('thCategory') %></th><th data-i18n="thStatus"><%= __('thStatus') %></th><th data-i18n="thPriority"><%= __('thPriority') %></th><th data-i18n="thVotes"><%= __('thVotes') %></th><th data-i18n="thReporter"><%= __('thReporter') %></th><th data-i18n="thDate"><%= __('thDate') %></th><th style="min-width:180px" data-i18n="thActions"><%= __('thActions') %></th></tr></thead>
+        <tbody id="tBody"><tr><td colspan="8" class="text-center text-muted" style="padding:3rem" data-i18n="loading"><%= __('loading') %></td></tr></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pages"></div>
+  </div>
+</div>
+
+<%- include('../partials/scripts') %>
+<script>
+if (!window.NIRVAAH?.Auth.isLoggedIn() || !window.NIRVAAH.Auth.isAdmin()) window.location.href='/login';
+const sLabel={pending:'<%= __("pending") %>',in_progress:'<%= __("inProgress") %>',resolved:'<%= __("resolved") %>'};
+const pLabel={high:'<%= __("priHigh") %>',medium:'<%= __("priMedium") %>',low:'<%= __("priLow") %>'};
+let page=1, timer;
+
+function derivePriorityFromVotes(votes){
+  const count = Number(votes || 0);
+  if (count >= 10) return 'high';
+  if (count >= 5) return 'medium';
+  return 'low';
+}
+
+function debounce() { clearTimeout(timer); timer=setTimeout(load,400); }
+
+async function load() {
+  const p={search:document.getElementById('search').value,category:document.getElementById('catF').value,status:document.getElementById('statF').value,priority:document.getElementById('priF').value,page,limit:15};
+  Object.keys(p).forEach(k=>!p[k]&&delete p[k]);
+  try {
+    const data = await window.NIRVAAH.Admin.getComplaints(p);
+    const list = data.complaints||[];
+    document.getElementById('rCount').textContent=`${data.pagination?.total||0} <%= __("resultsText") %>`;
+    if (!list.length) { document.getElementById('tBody').innerHTML='<tr><td colspan="8" class="text-center text-muted" style="padding:3rem"><%= __("noComplaintsFound") %></td></tr>'; return; }
+    document.getElementById('tBody').innerHTML = list.map(c=>`
+      <tr style="border-bottom: 1px solid var(--border, #eee); transition: background-color 0.2s;">
+        <td style="max-width:180px; padding: 14px 10px;"><a href="/admin/complaint?id=${c._id}" style="color:var(--text-main, #333);font-weight:600;font-size:.9rem;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${c.title}</a>${c.isDuplicate?'<span style="font-size:.7rem;color:var(--warning);margin-top:4px;display:block;font-weight:500;"><%= __("duplicateBadge") %></span>':''}</td>
+        <td class="text-sm" style="padding: 14px 10px; text-transform: capitalize; color: #555; white-space:nowrap;">${(c.category || '').replace(/_/g,' ')}</td>
+        <td style="padding: 14px 10px;"><span class="badge badge-${(c.status || '').toLowerCase()}">${sLabel[(c.status || '').toLowerCase()] || (c.status || 'Unknown')}</span></td>
+        <td style="padding: 14px 10px;"><span class="badge badge-${derivePriorityFromVotes(c.voteCount)}">${pLabel[derivePriorityFromVotes(c.voteCount)]}</span></td>
+        <td class="text-sm" style="padding: 14px 10px; font-weight: 600; color: #666;">${c.voteCount||0}</td>
+        <td class="text-sm text-muted" style="padding: 14px 10px; white-space:nowrap;">${c.user?.name||'<%= __("unknownUser") %>'}</td>
+        <td class="text-sm text-muted" style="padding: 14px 10px; white-space:nowrap;">${new Date(c.createdAt).toLocaleDateString()}</td>
+        <td style="padding: 14px 10px;">
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <select onchange="updStat('${c._id}',this.value,this)" style="background:var(--bg, #fff);border:1px solid var(--border, #ccc);color:var(--text, #333);border-radius:4px;padding:5px 8px;font-size:.8rem;cursor:pointer;outline:none;transition:border-color 0.2s;"><option value="" disabled selected><%= __("statusSelectOption") %></option><option value="pending"><%= __("pending") %></option><option value="in_progress"><%= __("inProgress") %></option><option value="resolved"><%= __("resolved") %></option></select>
+          </div>
+        </td>
+      </tr>`).join('');
+    // pagination
+    const pg=data.pagination;
+    if (!pg||pg.pages<=1){document.getElementById('pages').innerHTML='';return;}
+    let h='';if(pg.page>1)h+=`<div class="page-btn" onclick="changePage(${pg.page-1})">‹</div>`;
+    const s=Math.max(1,pg.page-2),e=Math.min(pg.pages,pg.page+2);
+    for(let i=s;i<=e;i++)h+=`<div class="page-btn ${i===pg.page?'active':''}" onclick="changePage(${i})">${i}</div>`;
+    if(pg.page<pg.pages)h+=`<div class="page-btn" onclick="changePage(${pg.page+1})">›</div>`;
+    document.getElementById('pages').innerHTML=h;
+  } catch(e){showToast('Error',e.message,'error');}
+}
+
+function changePage(n){page=n;load();scrollTo(0,0);}
+async function updStat(id,s,el){try{await window.NIRVAAH.Admin.updateStatus(id,s);showToast('Updated ✅',`<%= __("statusArrow") %> ${s.replace('_',' ')}`,'success');el.value='';load();}catch(e){showToast('Error',e.message,'error');}}
+
+load();
+</script>
+</body></html>
