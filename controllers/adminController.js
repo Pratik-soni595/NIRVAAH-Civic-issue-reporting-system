@@ -57,11 +57,18 @@ exports.updateComplaintStatus = async (req, res, next) => {
   try {
     const { status, note } = req.body;
 
-    const validStatuses = ["pending", "in_progress", "resolved"];
+    // 'resolved' can ONLY be set via the TRS resolution evidence endpoint.
+    // The admin status dropdown intentionally excludes it; block API-level attempts too.
+    const validStatuses = ["pending", "in_progress"];
     if (!validStatuses.includes(status)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid status value" });
+      return res.status(400).json({
+        success: false,
+        error: "INVALID_STATUS",
+        message:
+          status === "resolved"
+            ? "Complaints cannot be marked resolved via this endpoint. Use POST /api/complaints/:id/resolution (TRS) with camera evidence and GPS from a mobile device."
+            : "Invalid status value. Allowed: pending, in_progress.",
+      });
     }
 
     const complaint = await Complaint.findById(req.params.id);
@@ -76,15 +83,13 @@ exports.updateComplaintStatus = async (req, res, next) => {
     complaint.statusHistory.push({
       status,
       changedBy: req.user.id,
+      changedByModel: "Admin",
       note: note || `Status changed to ${status}`,
     });
 
-    if (prevStatus !== "resolved" && status === "resolved") {
-      complaint.resolvedAt = new Date();
-      await User.findByIdAndUpdate(complaint.user, {
-        $inc: { resolvedCount: 1, points: 25 },
-      });
-    } else if (prevStatus === "resolved" && status !== "resolved") {
+    // If reverting from resolved back to pending/in_progress (e.g. supervisor action)
+    // deduct user points and clear resolved state
+    if (prevStatus === "resolved" && status !== "resolved") {
       complaint.resolvedAt = null;
       await User.findByIdAndUpdate(complaint.user, {
         $inc: { resolvedCount: -1, points: -25 },

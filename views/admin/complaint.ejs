@@ -1,15 +1,59 @@
 <%- include('../partials/head') %>
-
 <%- include('../partials/admin-navbar') %>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+/* ── TRS Panel Styles ─────────────────────────────────── */
+.trs-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-top:1.5rem}
+.trs-panel-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.trs-locked{display:flex;align-items:center;gap:.75rem;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:8px;padding:1rem;font-size:.88rem;color:#10b981}
+.trs-locked svg{flex-shrink:0;width:20px;height:20px}
+.trs-suspicious-banner{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.35);border-radius:8px;padding:1rem;font-size:.88rem;color:#f59e0b;margin-bottom:1rem;display:flex;gap:.75rem;align-items:flex-start}
+.trs-suspicious-banner svg{flex-shrink:0;margin-top:2px;width:18px;height:18px}
+
+/* Camera capture */
+.camera-wrap{position:relative;width:100%;background:#000;border-radius:8px;overflow:hidden;aspect-ratio:4/3;margin-bottom:1rem}
+#cameraStream{width:100%;height:100%;object-fit:cover;display:block}
+#capturedPreview{width:100%;height:100%;object-fit:cover;display:none}
+.camera-overlay{position:absolute;bottom:0;left:0;right:0;padding:.75rem 1rem;background:linear-gradient(transparent,rgba(0,0,0,.7));color:#fff;font-size:.8rem;display:flex;justify-content:space-between;align-items:center}
+.gps-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .65rem;border-radius:20px;font-size:.75rem;font-weight:600}
+.gps-high{background:rgba(16,185,129,.85);color:#fff}
+.gps-medium{background:rgba(245,158,11,.85);color:#fff}
+.gps-low{background:rgba(239,68,68,.85);color:#fff}
+.gps-acquiring{background:rgba(99,102,241,.85);color:#fff}
+#captureBtn{width:100%;padding:.9rem;border-radius:8px;font-weight:700;font-size:.95rem;margin-bottom:.75rem;background:var(--gradient-primary);color:#fff;border:none;cursor:pointer;transition:opacity .2s}
+#captureBtn:disabled{opacity:.45;cursor:not-allowed}
+#retakeBtn{display:none;width:100%;padding:.75rem;border-radius:8px;font-weight:600;font-size:.9rem;margin-bottom:.75rem;background:transparent;border:1px solid var(--border);color:var(--text);cursor:pointer}
+
+/* Distance badge */
+.distance-ok{color:#10b981;font-weight:600}
+.distance-warn{color:#f59e0b;font-weight:600}
+.distance-danger{color:#ef4444;font-weight:600}
+.dist-row{display:flex;align-items:center;gap:.5rem;font-size:.85rem;margin-bottom:.75rem;padding:.6rem .9rem;border-radius:6px;background:var(--bg)}
+
+/* Desktop block */
+.desktop-block{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:1.5rem;text-align:center}
+.desktop-block svg{width:40px;height:40px;color:#ef4444;margin:0 auto .75rem;display:block}
+
+/* Resolution evidence card (already resolved view) */
+.evidence-img{width:100%;border-radius:8px;margin-bottom:.75rem;border:1px solid var(--border)}
+.evidence-row{display:flex;justify-content:space-between;align-items:center;font-size:.83rem;padding:.4rem 0;border-bottom:1px solid var(--border-light)}
+.evidence-row:last-child{border-bottom:none}
+.evidence-label{color:var(--text-muted)}
+.evidence-val{font-weight:600;text-align:right;max-width:60%;word-break:break-all}
+.review-btn-group{display:flex;gap:.6rem;margin-top:1rem}
+.btn-approve{flex:1;padding:.7rem;border-radius:8px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.35);font-weight:700;cursor:pointer;transition:background .2s}
+.btn-approve:hover{background:rgba(16,185,129,.3)}
+.btn-reject{flex:1;padding:.7rem;border-radius:8px;background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.3);font-weight:700;cursor:pointer;transition:background .2s}
+.btn-reject:hover{background:rgba(239,68,68,.2)}
+</style>
 
 <div style="display:flex;min-height:100vh;padding-top:72px">
   <%- include('../partials/admin-sidebar', {navPage}) %>
 
   <div class="admin-main">
     <div id="loadingState" class="loading-center" style="padding:4rem"><div class="spinner"></div></div>
-    <div id="content" class="hidden" style="max-width:900px"></div>
+    <div id="content" class="hidden" style="max-width:920px"></div>
   </div>
 </div>
 
@@ -25,126 +69,479 @@ const id = new URLSearchParams(location.search).get('id');
 if (!id) location.href = '/admin/complaints';
 
 const sColors = {pending:'#ef4444',in_progress:'#f59e0b',resolved:'#10b981'};
-const sLabel = {pending:'⏳ <%= __("pending") %>',in_progress:'🔧 <%= __("inProgress") %>',resolved:'✅ <%= __("resolved") %>'};
-const cIcons = {pothole:'🕳️',garbage:'🗑️',water_leakage:'💧',electricity:'⚡',road_damage:'🛣️',street_light:'💡',sewage:'🌊',tree_hazard:'🌳',graffiti:'🎨',other:'📍'};
-const pLabel = {high:'<%= __("priHigh") %>',medium:'<%= __("priMedium") %>',low:'<%= __("priLow") %>'};
+const sLabel  = {pending:'⏳ Pending',in_progress:'🔧 In Progress',resolved:'✅ Resolved'};
+const cIcons  = {pothole:'🕳️',garbage:'🗑️',water_leakage:'💧',electricity:'⚡',road_damage:'🛣️',street_light:'💡',sewage:'🌊',tree_hazard:'🌳',graffiti:'🎨',other:'📍'};
+const pLabel  = {high:'High Priority',medium:'Medium Priority',low:'Low Priority'};
 
-function derivePriorityFromVotes(votes) {
-  const count = Number(votes || 0);
-  if (count >= 10) return 'high';
-  if (count >= 5) return 'medium';
+// ── GPS state ────────────────────────────────────────────────────────────────
+let gpsWatch = null;
+let currentGPS = null;  // { lat, lng, accuracyM }
+let capturedBlob = null;
+let capturedDataUrl = null;
+let mediaStream = null;
+
+function derivePriorityFromVotes(v) {
+  const n = Number(v||0);
+  if (n >= 10) return 'high';
+  if (n >= 5)  return 'medium';
   return 'low';
 }
 
+// ── Haversine (client-side for live preview only — server re-computes authoritatively) ──
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371000, r = d => d * Math.PI / 180;
+  const dLat = r(lat2-lat1), dLng = r(lng2-lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(r(lat1))*Math.cos(r(lat2))*Math.sin(dLng/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+// ── Main loader ──────────────────────────────────────────────────────────────
 async function load() {
   try {
     const data = await window.NIRVAAH.Complaints.getById(id);
     const c = data.complaint;
-    document.title = `${c.title} – NIRVAAH`;
+    document.title = `${c.title} – NIRVAAH Admin`;
     document.getElementById('loadingState').classList.add('hidden');
     const div = document.getElementById('content');
     div.classList.remove('hidden');
 
-    div.innerHTML = `
-      <div class="breadcrumb mb-2"><a href="/admin/dashboard" data-i18n="dashboard"><%= __('dashboard') %></a> <span>›</span> <a href="/admin/complaints" data-i18n="allComplaintsTitle"><%= __('allComplaintsTitle') %></a> <span>›</span> <span>${c.title}</span></div>
-      <div style="display:grid;grid-template-columns:1fr 340px;gap:1.5rem" class="complaint-detail-grid">
-        <div>
-          ${c.images?.length?`<div style="margin-bottom:1.5rem"><img id="mainImg" src="${c.images[0].url}" alt="${c.title}" style="width:100%;height:320px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--border);cursor:pointer">${c.images.length>1?`<div style="display:flex;gap:.5rem;margin-top:.5rem;overflow-x:auto">${c.images.map((img,i)=>`<img src="${img.url}" onclick="document.getElementById('mainImg').src='${img.url}'" style="width:70px;height:70px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid ${i===0?'var(--primary)':'var(--border)'}" loading="lazy">`).join('')}</div>`:''}</div>`:`<div style="height:220px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:5rem;margin-bottom:1.5rem">${cIcons[c.category]||'📍'}</div>`}
-          
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem">
-            <h1 style="font-size:1.5rem">${c.title}</h1>
-            <div style="display:flex;gap:.5rem">
-              <select onchange="updStat('${c._id}',this.value,this)" style="background:var(--bg-card);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:.85rem;color:var(--text)">
-                <option value="pending" ${c.status==='pending'?'selected':''}>⏳ <%= __("pending") %></option>
-                <option value="in_progress" ${c.status==='in_progress'?'selected':''}>🔧 <%= __("inProgress") %></option>
-                <option value="resolved" ${c.status==='resolved'?'selected':''}>✅ <%= __("resolved") %></option>
-              </select>
-            </div>
-          </div>
+    // ── Is evidence already locked? ──
+    const isResolved = c.status === 'resolved';
+    const hasEvidence = !!(c.resolutionEvidence?.submittedAt);
 
-          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
-            <span class="badge badge-${c.status}">${sLabel[c.status]}</span>
-            <span class="badge badge-${derivePriorityFromVotes(c.voteCount)}">${pLabel[derivePriorityFromVotes(c.voteCount)]}</span>
-            <span class="badge" style="background:rgba(99,102,241,.1);color:var(--primary-light)">${cIcons[c.category]||'📍'} ${c.category.replace('_',' ')}</span>
-            ${c.isDuplicate?`<span class="badge" style="background:rgba(245,158,11,.1);color:#fbbf24">⚠️ <%= __('duplicateFlagged') %></span>`:''}
-          </div>
-          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.25rem;margin-bottom:1.25rem">
-            <h4 class="text-muted text-sm mb-1" style="text-transform:uppercase;letter-spacing:.05em" data-i18n="descriptionHeading"><%= __('descriptionHeading') %></h4>
-            <p style="line-height:1.7">${c.description}</p>
-          </div>
-          <div id="detailMap" style="height:200px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:1.25rem"></div>
-          <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:1.25rem">📍 ${c.location?.address||'<%= __("noAddress") %>'} ${c.location?.landmark?`· <%= __("nearLandmark") %> ${c.location.landmark}`:''}</div>
-          ${c.statusHistory?.length?`<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.25rem">
-            <h4 style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:1rem" data-i18n="statusTimeline"><%= __('statusTimeline') %></h4>
-            ${c.statusHistory.map(h=>`<div style="display:flex;gap:1rem;margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:1px solid var(--border-light)"><div style="width:10px;height:10px;border-radius:50%;background:${sColors[h.status]||'var(--primary)'};flex-shrink:0;margin-top:4px"></div><div><div class="text-sm fw-bold">${sLabel[h.status]||h.status}</div><div class="text-sm text-muted">${h.note||''}</div><div style="font-size:.75rem;color:var(--text-dim)">${new Date(h.timestamp).toLocaleString()}</div></div></div>`).join('')}
-          </div>`:''}
-        </div>
-        <div>
-          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;position:sticky;top:90px">
-            <button onclick="deleteComplaint('${c._id}')" class="btn btn-outline btn-block mb-3 text-danger border-danger">
-              🗑️ <%= __("deleteAction") || "Delete Complaint" %>
-            </button>
-            <div class="text-sm text-muted mb-1" data-i18n="reportedBy"><%= __('reportedBy') %></div>
-            <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
-              <div style="width:36px;height:36px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;font-weight:700">${c.user?.name?.[0]||'?'}</div>
-              <div><div class="fw-bold text-sm">${c.user?.name||'<%= __("unknownUser") %>'}</div><div class="text-sm text-muted">${c.user?.email||''}</div><div class="text-sm text-muted">${new Date(c.createdAt).toLocaleDateString()}</div></div>
-            </div>
-            <div class="divider"></div>
-            <div class="d-flex justify-between text-sm mb-1"><span class="text-muted" data-i18n="priorityScoreTitle"><%= __('priorityScoreTitle') %></span><span class="fw-bold text-primary">${c.priorityScore||0}</span></div>
-            <div class="d-flex justify-between text-sm mb-1"><span class="text-muted" data-i18n="votesTitle"><%= __('votesTitle') %></span><span>👍 ${c.voteCount||0}</span></div>
-            
-            <div class="divider"></div>
-            <div class="text-sm fw-bold mb-1"><%= __('adminNoteTitle') || "Admin Note" %></div>
-            <textarea id="adminNoteInput" class="form-control mb-2" rows="3" placeholder="<%= __('adminNotePlaceholder') || "Add a note..." %>">${c.adminNote||''}</textarea>
-            <button class="btn btn-primary btn-sm btn-block" onclick="saveAdminNote('${c._id}')"><%= __("saveAction") || "Save Note" %></button>
-          </div>
-        </div>
-      </div>`;
+    div.innerHTML = buildComplaintHTML(c, isResolved, hasEvidence);
 
-    // Mini map
+    // Mini map — complaint origin pin
     if (c.location?.coordinates) {
-      const [lng, lat] = c.location.coordinates;
-      const dm = L.map('detailMap').setView([lat,lng],15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(dm);
-      L.marker([lat,lng],{icon:L.divIcon({className:'',html:`<div style="width:14px;height:14px;border-radius:50%;background:${sColors[c.status]||'#6366f1'};border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5)"></div>`,iconSize:[14,14],iconAnchor:[7,7]})}).addTo(dm).bindPopup(c.title).openPopup();
+      const [lng2, lat2] = c.location.coordinates;
+      const m = L.map('detailMap').setView([lat2, lng2], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);
+      L.marker([lat2, lng2], {
+        icon: L.divIcon({
+          className: '',
+          html: `<div style="width:14px;height:14px;border-radius:50%;background:${sColors[c.status]||'#6366f1'};border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5)"></div>`,
+          iconSize:[14,14], iconAnchor:[7,7]
+        })
+      }).addTo(m).bindPopup(`<b>Complaint Site</b><br>${c.title}`).openPopup();
+
+      // If evidence exists, add a resolution pin too
+      if (hasEvidence && c.resolutionEvidence.captureLocation?.lat) {
+        const rLat = c.resolutionEvidence.captureLocation.lat;
+        const rLng = c.resolutionEvidence.captureLocation.lng;
+        L.marker([rLat, rLng], {
+          icon: L.divIcon({
+            className: '',
+            html: `<div style="width:14px;height:14px;border-radius:50%;background:#10b981;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5)"></div>`,
+            iconSize:[14,14], iconAnchor:[7,7]
+          })
+        }).addTo(m).bindPopup('<b>Resolution Location</b>');
+        m.fitBounds([[lat2, lng2],[rLat, rLng]], {padding:[30,30]});
+      }
     }
+
+    // If not yet resolved — init TRS capture panel
+    if (!hasEvidence && c.status !== 'resolved') {
+      initTRS(c);
+    }
+
   } catch(err) {
-    document.getElementById('loadingState').innerHTML=`<div class="empty-state" style="margin:0 auto"><div class="empty-icon">❌</div><div class="empty-title" data-i18n="notFound"><%= __('notFound') %></div><a href="/admin/complaints" class="btn btn-primary mt-3" data-i18n="backBtn"><%= __('backBtn') %></a></div>`;
+    document.getElementById('loadingState').innerHTML =
+      `<div class="empty-state" style="margin:0 auto"><div class="empty-icon">❌</div><div class="empty-title">Could not load complaint</div><a href="/admin/complaints" class="btn btn-primary mt-3">Back to list</a></div>`;
   }
 }
 
-async function updStat(cid,s,el){
-  try{
-    await window.NIRVAAH.Admin.updateStatus(cid,s);
-    showToast('Updated ✅',`<%= __("statusArrow") %> ${s.replace('_',' ')}`,'success');
+// ── HTML builder ─────────────────────────────────────────────────────────────
+function buildComplaintHTML(c, isResolved, hasEvidence) {
+  const ev = c.resolutionEvidence;
+  const isSuspicious = ev?.isSuspicious;
+  const reviewDecision = ev?.supervisorReview?.decision;
+
+  return `
+    <div class="breadcrumb mb-2">
+      <a href="/admin/dashboard">Dashboard</a> <span>›</span>
+      <a href="/admin/complaints">All Complaints</a> <span>›</span>
+      <span>${c.title}</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:1.5rem" class="complaint-detail-grid">
+      <!-- LEFT -->
+      <div>
+        ${c.images?.length
+          ? `<div style="margin-bottom:1.5rem"><img id="mainImg" src="${c.images[0].url}" alt="${c.title}" style="width:100%;height:320px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--border)">
+             ${c.images.length>1?`<div style="display:flex;gap:.5rem;margin-top:.5rem;overflow-x:auto">${c.images.map((img,i)=>`<img src="${img.url}" onclick="document.getElementById('mainImg').src='${img.url}'" style="width:70px;height:70px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid ${i===0?'var(--primary)':'var(--border)'};" loading="lazy">`).join('')}</div>`:''}</div>`
+          : `<div style="height:220px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:5rem;margin-bottom:1.5rem">${cIcons[c.category]||'📍'}</div>`
+        }
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem">
+          <h1 style="font-size:1.5rem">${c.title}</h1>
+          <div style="display:flex;gap:.5rem">
+            ${!hasEvidence && c.status !== 'resolved'
+              ? `<select onchange="updStat('${c._id}',this.value,this)" style="background:var(--bg-card);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:.85rem;color:var(--text)">
+                   <option value="pending" ${c.status==='pending'?'selected':''}>⏳ Pending</option>
+                   <option value="in_progress" ${c.status==='in_progress'?'selected':''}>🔧 In Progress</option>
+                   <option value="resolved" disabled>✅ Resolved (use TRS below)</option>
+                 </select>`
+              : `<span class="badge badge-resolved">✅ Resolved — Evidence Locked</span>`
+            }
+          </div>
+        </div>
+
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
+          <span class="badge badge-${c.status}">${sLabel[c.status]}</span>
+          <span class="badge badge-${derivePriorityFromVotes(c.voteCount)}">${pLabel[derivePriorityFromVotes(c.voteCount)]}</span>
+          <span class="badge" style="background:rgba(99,102,241,.1);color:var(--primary-light)">${cIcons[c.category]||'📍'} ${c.category.replace(/_/g,' ')}</span>
+          ${c.isDuplicate?`<span class="badge" style="background:rgba(245,158,11,.1);color:#fbbf24">⚠️ Duplicate</span>`:''}
+        </div>
+
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.25rem;margin-bottom:1.25rem">
+          <h4 class="text-muted text-sm mb-1" style="text-transform:uppercase;letter-spacing:.05em">Description</h4>
+          <p style="line-height:1.7">${c.description}</p>
+        </div>
+
+        <div id="detailMap" style="height:200px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:1.25rem"></div>
+        <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:1.25rem">📍 ${c.location?.address||'No address'} ${c.location?.landmark?`· Near ${c.location.landmark}`:''}</div>
+
+        <!-- TRS Panel -->
+        <div id="trsSection">
+          ${hasEvidence
+            ? buildEvidencePanel(ev)
+            : c.status === 'resolved'
+            ? `<div class="trs-panel"><div class="trs-locked"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><div><strong>Legacy Resolution</strong><div style="font-size:.82rem;margin-top:.25rem">This complaint was resolved before the Transparent Resolution System was enabled.</div></div></div></div>`
+            : '<div id="trsCapturePanel"></div>'
+          }
+        </div>
+
+        ${c.statusHistory?.length?`<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.25rem;margin-top:1.25rem">
+          <h4 style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:1rem">Status Timeline</h4>
+          ${c.statusHistory.map(h=>`<div style="display:flex;gap:1rem;margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:1px solid var(--border-light)"><div style="width:10px;height:10px;border-radius:50%;background:${sColors[h.status]||'var(--primary)'};flex-shrink:0;margin-top:4px"></div><div><div class="text-sm fw-bold">${sLabel[h.status]||h.status}</div><div class="text-sm text-muted">${h.note||''}</div><div style="font-size:.75rem;color:var(--text-dim)">${new Date(h.timestamp).toLocaleString()}</div></div></div>`).join('')}
+        </div>`:''}
+      </div>
+
+      <!-- RIGHT sidebar -->
+      <div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;position:sticky;top:90px">
+          <button onclick="deleteComplaint('${c._id}')" class="btn btn-outline btn-block mb-3 text-danger border-danger">🗑️ Delete Complaint</button>
+          <div class="text-sm text-muted mb-1">Reported by</div>
+          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;font-weight:700">${c.user?.name?.[0]||'?'}</div>
+            <div><div class="fw-bold text-sm">${c.user?.name||'Unknown'}</div><div class="text-sm text-muted">${c.user?.email||''}</div><div class="text-sm text-muted">${new Date(c.createdAt).toLocaleDateString()}</div></div>
+          </div>
+          <div class="divider"></div>
+          <div class="d-flex justify-between text-sm mb-1"><span class="text-muted">Priority Score</span><span class="fw-bold text-primary">${c.priorityScore||0}</span></div>
+          <div class="d-flex justify-between text-sm mb-1"><span class="text-muted">Votes</span><span>👍 ${c.voteCount||0}</span></div>
+          <div class="divider"></div>
+          <div class="text-sm fw-bold mb-1">Admin Note</div>
+          <textarea id="adminNoteInput" class="form-control mb-2" rows="3" placeholder="Add a note...">${c.adminNote||''}</textarea>
+          <button class="btn btn-primary btn-sm btn-block" onclick="saveAdminNote('${c._id}')">Save Note</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Evidence panel (already resolved) ────────────────────────────────────────
+function buildEvidencePanel(ev) {
+  const isSusp = ev.isSuspicious;
+  const review = ev.supervisorReview;
+  const distClass = !isSusp ? 'distance-ok' : (ev.distanceFromOriginM > 500 ? 'distance-danger' : 'distance-warn');
+  const distText = ev.distanceFromOriginM != null ? `${ev.distanceFromOriginM}m` : 'N/A';
+
+  return `
+    <div class="trs-panel">
+      <div class="trs-panel-title">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Transparent Resolution Evidence
+      </div>
+
+      ${isSusp ? `
+        <div class="trs-suspicious-banner">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div>
+            <strong>Suspicious Resolution</strong>
+            <div style="font-size:.82rem;margin-top:.2rem">Location was ${distText} from the complaint site. ${review?.decision ? `Supervisor decision: <strong>${review.decision}</strong>` : 'Awaiting supervisor review.'}</div>
+          </div>
+        </div>` : ''
+      }
+
+      ${ev.imageUrl ? `<img src="${ev.imageUrl}" class="evidence-img" alt="Resolution Evidence">` : ''}
+
+      <div class="evidence-row"><span class="evidence-label">Submitted At</span><span class="evidence-val">${new Date(ev.submittedAt).toLocaleString()}</span></div>
+      <div class="evidence-row"><span class="evidence-label">Distance from Site</span><span class="evidence-val ${distClass}">${distText}${isSusp?' ⚠️':' ✅'}</span></div>
+      <div class="evidence-row"><span class="evidence-label">GPS Accuracy</span><span class="evidence-val">${ev.captureLocation?.accuracyM ? ev.captureLocation.accuracyM + 'm' : 'N/A'}</span></div>
+      <div class="evidence-row"><span class="evidence-label">Image Hash</span><span class="evidence-val" style="font-size:.7rem;font-family:monospace">${ev.imageHash ? ev.imageHash.slice(0,24)+'…' : 'N/A'}</span></div>
+      <div class="evidence-row"><span class="evidence-label">Submitted By</span><span class="evidence-val">${ev.submitterRole||'admin'}</span></div>
+      ${ev.notes ? `<div class="evidence-row"><span class="evidence-label">Notes</span><span class="evidence-val">${ev.notes}</span></div>` : ''}
+
+      ${isSusp && !review?.decision ? `
+        <div class="review-btn-group">
+          <button class="btn-approve" onclick="doReview('approved')">✅ Approve Resolution</button>
+          <button class="btn-reject"  onclick="doReview('rejected')">🔴 Reject & Reopen</button>
+        </div>
+        <textarea id="reviewNotes" class="form-control mt-2" rows="2" placeholder="Optional supervisor notes…"></textarea>
+      ` : ''}
+
+      ${review?.decision ? `<div style="margin-top:.75rem;font-size:.82rem;padding:.6rem .8rem;border-radius:6px;background:${review.decision==='approved'?'rgba(16,185,129,.08)':'rgba(239,68,68,.08)'}">
+        Supervisor ${review.decision} on ${new Date(review.reviewedAt).toLocaleDateString()}${review.notes?`: ${review.notes}`:''}
+      </div>` : ''}
+
+      <div class="trs-locked" style="margin-top:1rem">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <div><strong>Evidence Locked</strong> — This record is immutable and cannot be edited.</div>
+      </div>
+    </div>`;
+}
+
+// ── TRS Capture Panel (not yet resolved) ─────────────────────────────────────
+function initTRS(c) {
+  const panel = document.getElementById('trsCapturePanel');
+  if (!panel) return;
+
+  // Desktop block
+  const ua = navigator.userAgent;
+  const isMobile = /mobile|android|iphone|ipad|ipod/i.test(ua);
+  if (!isMobile) {
+    panel.innerHTML = `
+      <div class="trs-panel">
+        <div class="trs-panel-title">🛡️ Transparent Resolution System</div>
+        <div class="desktop-block">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <div style="font-weight:700;margin-bottom:.5rem">Mobile Device Required</div>
+          <div style="font-size:.85rem;color:var(--text-muted)">Resolution evidence must be submitted from a mobile device at the complaint site using the device camera and live GPS. Please open this page on your mobile device.</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const originCoords = c.location?.coordinates; // [lng, lat]
+
+  panel.innerHTML = `
+    <div class="trs-panel">
+      <div class="trs-panel-title">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Submit Resolution Evidence
+      </div>
+
+      <div id="permStep">
+        <p style="font-size:.88rem;margin-bottom:1rem;line-height:1.6">To resolve this complaint, NIRVAAH requires:</p>
+        <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.25rem;font-size:.88rem">
+          <div>📷 <strong>Camera</strong> — to capture live evidence at the site</div>
+          <div>📍 <strong>GPS Location</strong> — to verify you are at the complaint location</div>
+        </div>
+        <button id="grantBtn" class="btn btn-primary btn-block" onclick="requestPermissions(${originCoords ? `[${originCoords[1]},${originCoords[0]}]` : 'null'})">
+          Grant Camera &amp; Location
+        </button>
+      </div>
+
+      <div id="captureStep" style="display:none">
+        <div class="camera-wrap">
+          <video id="cameraStream" autoplay playsinline muted></video>
+          <img id="capturedPreview" alt="Resolution capture">
+          <div class="camera-overlay">
+            <span style="font-size:.75rem;opacity:.85">📍 ${c.location?.address || 'Complaint site'}</span>
+            <span id="gpsBadge" class="gps-badge gps-acquiring">⌛ Acquiring GPS…</span>
+          </div>
+        </div>
+
+        <div id="distanceRow" class="dist-row" style="display:none"></div>
+
+        <button id="captureBtn" disabled onclick="capturePhoto()">📷 Capture Resolution Photo</button>
+        <button id="retakeBtn" onclick="retake()">↩ Retake Photo</button>
+
+        <textarea id="resNotes" class="form-control mb-3" rows="2" placeholder="Optional notes (e.g. 'Pothole filled and re-tarred')"></textarea>
+
+        <button id="submitResBtn" class="btn btn-primary btn-block" style="display:none" onclick="submitResolution()">
+          Submit Resolution Evidence
+        </button>
+        <div id="submitMsg" style="font-size:.82rem;text-align:center;margin-top:.5rem"></div>
+      </div>
+    </div>`;
+}
+
+let originLatLng = null;
+
+async function requestPermissions(origin) {
+  originLatLng = origin; // [lat, lng] or null
+  if (origin) document.querySelector('.trs-panel')._origin = origin;
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: false
+    });
+    document.getElementById('cameraStream').srcObject = mediaStream;
+    document.getElementById('permStep').style.display = 'none';
+    document.getElementById('captureStep').style.display = 'block';
+    startGPSWatch();
+  } catch(e) {
+    showToast('Camera Denied', 'Camera access is required to submit resolution evidence. Please allow camera in your browser settings.', 'error');
+  }
+}
+
+function startGPSWatch() {
+  if (!navigator.geolocation) {
+    document.getElementById('gpsBadge').className = 'gps-badge gps-low';
+    document.getElementById('gpsBadge').textContent = '❌ GPS unavailable';
+    return;
+  }
+  gpsWatch = navigator.geolocation.watchPosition(
+    pos => {
+      const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+      currentGPS = { lat, lng, accuracyM: Math.round(accuracy) };
+      updateGPSUI(originLatLng);
+    },
+    err => {
+      document.getElementById('gpsBadge').className = 'gps-badge gps-low';
+      document.getElementById('gpsBadge').textContent = '❌ Location denied';
+      showToast('Location Required', 'Enable GPS location to submit resolution evidence.', 'error');
+    },
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+  );
+}
+
+function updateGPSUI(origin) {
+  const badge = document.getElementById('gpsBadge');
+  const captureBtn = document.getElementById('captureBtn');
+  const distRow = document.getElementById('distanceRow');
+  const acc = currentGPS.accuracyM;
+
+  // GPS badge
+  if (acc <= 20) { badge.className = 'gps-badge gps-high'; badge.textContent = `🟢 GPS ±${acc}m`; }
+  else if (acc <= 50) { badge.className = 'gps-badge gps-medium'; badge.textContent = `🟡 GPS ±${acc}m`; }
+  else { badge.className = 'gps-badge gps-low'; badge.textContent = `🔴 GPS ±${acc}m (weak)`; }
+
+  // Enable capture only if accuracy < 100m
+  captureBtn.disabled = acc > 100;
+
+  // Distance preview
+  if (origin && distRow) {
+    const dist = haversine(origin[0], origin[1], currentGPS.lat, currentGPS.lng);
+    distRow.style.display = 'flex';
+    if (dist <= 100) {
+      distRow.innerHTML = `<span class="distance-ok">✅ ${dist}m from complaint site — within threshold</span>`;
+    } else if (dist <= 500) {
+      distRow.innerHTML = `<span class="distance-warn">⚠️ ${dist}m from complaint site — will be flagged suspicious</span>`;
+    } else {
+      distRow.innerHTML = `<span class="distance-danger">🔴 ${dist}m from complaint site — are you at the right location?</span>`;
+    }
+  }
+}
+
+function capturePhoto() {
+  const video = document.getElementById('cameraStream');
+  const canvas = document.createElement('canvas');
+  canvas.width  = video.videoWidth  || 1280;
+  canvas.height = video.videoHeight || 960;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+
+  canvas.toBlob(blob => {
+    capturedBlob = blob;
+    capturedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    document.getElementById('capturedPreview').src = capturedDataUrl;
+    document.getElementById('capturedPreview').style.display = 'block';
+    document.getElementById('cameraStream').style.display = 'none';
+    document.getElementById('captureBtn').style.display = 'none';
+    document.getElementById('retakeBtn').style.display = 'block';
+    document.getElementById('submitResBtn').style.display = 'block';
+    if (gpsWatch) navigator.geolocation.clearWatch(gpsWatch);
+  }, 'image/jpeg', 0.9);
+}
+
+function retake() {
+  capturedBlob = null; capturedDataUrl = null;
+  document.getElementById('capturedPreview').style.display = 'none';
+  document.getElementById('cameraStream').style.display = 'block';
+  document.getElementById('captureBtn').style.display = 'block';
+  document.getElementById('captureBtn').disabled = true;
+  document.getElementById('retakeBtn').style.display = 'none';
+  document.getElementById('submitResBtn').style.display = 'none';
+  startGPSWatch();
+}
+
+async function submitResolution() {
+  if (!capturedBlob || !currentGPS) {
+    showToast('Error', 'Please capture a photo and ensure GPS is active.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('submitResBtn');
+  const msg = document.getElementById('submitMsg');
+  btn.disabled = true;
+  btn.textContent = '⏳ Uploading evidence…';
+  msg.textContent = '';
+
+  const fd = new FormData();
+  fd.append('image', capturedBlob, `resolution_${id}_${Date.now()}.jpg`);
+  fd.append('latitude',    currentGPS.lat);
+  fd.append('longitude',   currentGPS.lng);
+  fd.append('gpsAccuracyM', currentGPS.accuracyM);
+  fd.append('notes', document.getElementById('resNotes')?.value || '');
+
+  try {
+    const resp = await fetch(`/api/complaints/${id}/resolution`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${window.NIRVAAH.Auth.getToken()}` },
+      body: fd,
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.message || 'Submission failed');
+
+    if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+    showToast('Resolved ✅', data.message, 'success');
+    setTimeout(() => load(), 1500);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Submit Resolution Evidence';
+    msg.textContent = '❌ ' + e.message;
+    showToast('Error', e.message, 'error');
+  }
+}
+
+async function doReview(decision) {
+  const notesEl = document.getElementById('reviewNotes');
+  const notes = notesEl ? notesEl.value.trim() : '';
+  if (!confirm(`Are you sure you want to ${decision === 'approved' ? 'approve' : 'reject'} this resolution?`)) return;
+  try {
+    const resp = await fetch(`/api/complaints/${id}/resolution/review`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${window.NIRVAAH.Auth.getToken()}`
+      },
+      body: JSON.stringify({ decision, notes }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.message || 'Review failed');
+    showToast(decision === 'approved' ? 'Approved ✅' : 'Rejected 🔴', data.message, 'success');
+    setTimeout(() => load(), 1200);
+  } catch(e) {
+    showToast('Error', e.message, 'error');
+  }
+}
+
+async function updStat(cid, s, el) {
+  try {
+    await window.NIRVAAH.Admin.updateStatus(cid, s);
+    showToast('Updated ✅', `Status → ${s.replace('_',' ')}`, 'success');
     load();
-  }catch(e){
-    showToast('Error',e.message,'error');
+  } catch(e) {
+    showToast('Error', e.message, 'error');
     load();
   }
 }
 
 async function saveAdminNote(cid) {
-  // Add a call if updating admin notes explicitly, 
-  // but usually updateStatus covers notes or we can just mock a success currently.
   showToast('Saved', 'Admin note feature placeholder', 'success');
 }
 
 async function deleteComplaint(cid) {
-  if (!confirm('<%= __("deleteConfirmTitle") || "Are you sure you want to delete this complaint?" %>')) return;
+  if (!confirm('Are you sure you want to delete this complaint?')) return;
   try {
     const res = await fetch(`/api/complaints/${cid}`, {
       method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${window.NIRVAAH.Auth.getToken()}`
-      }
+      headers: { 'Authorization': `Bearer ${window.NIRVAAH.Auth.getToken()}` }
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to delete');
     showToast('Deleted', 'Complaint deleted successfully', 'success');
-    setTimeout(() => {
-      window.location.href = '/admin/complaints';
-    }, 1000);
+    setTimeout(() => { window.location.href = '/admin/complaints'; }, 1000);
   } catch(e) {
     showToast('Error', e.message, 'error');
   }

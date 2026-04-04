@@ -36,7 +36,7 @@ const complaintSchema = new mongoose.Schema(
     },
     aiSuggestedCategory: {
       type: String,
-      default: null, // Populated by AI image analysis
+      default: null,
     },
     status: {
       type: String,
@@ -50,15 +50,14 @@ const complaintSchema = new mongoose.Schema(
     },
     priorityScore: {
       type: Number,
-      default: 0, // Computed: votes + severity + location bonus
+      default: 0,
     },
     images: [
       {
         url: String,
-        publicId: String, // Cloudinary public ID for deletion
+        publicId: String,
       },
     ],
-    // GeoJSON Point for geospatial queries
     location: {
       type: {
         type: String,
@@ -87,7 +86,6 @@ const complaintSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    // Duplicate detection
     isDuplicate: {
       type: Boolean,
       default: false,
@@ -97,7 +95,6 @@ const complaintSchema = new mongoose.Schema(
       ref: "Complaint",
       default: null,
     },
-    // Status history for timeline view
     statusHistory: [
       {
         status: String,
@@ -119,6 +116,50 @@ const complaintSchema = new mongoose.Schema(
     ],
     resolvedAt: Date,
     adminNote: String,
+
+    // ─────────────────────────────────────────────────────
+    // TRANSPARENT RESOLUTION SYSTEM (TRS) — WRITE-ONCE
+    // Once submittedAt is set this sub-document is immutable.
+    // ─────────────────────────────────────────────────────
+    resolutionEvidence: {
+      // Cloudinary-hosted resolution photo
+      imageUrl:      { type: String, default: null },
+      imagePublicId: { type: String, default: null },
+      imageHash:     { type: String, default: null }, // SHA-256 hex
+
+      // Server-injected timestamp — any client-provided value is discarded
+      submittedAt:   { type: Date, default: null },
+
+      // GPS at moment of capture (client-provided, server-validated)
+      captureLocation: {
+        lat:       { type: Number, default: null },
+        lng:       { type: Number, default: null },
+        accuracyM: { type: Number, default: null },
+      },
+
+      // Haversine validation result
+      distanceFromOriginM: { type: Number, default: null },
+      isSuspicious:        { type: Boolean, default: false },
+      suspicionReason: {
+        type: String,
+        enum: ["DISTANCE_EXCEEDED", "NO_ORIGIN_COORDINATES", "LOW_ACCURACY", null],
+        default: null,
+      },
+
+      // Supervisor review (only populated for suspicious submissions)
+      supervisorReview: {
+        reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", default: null },
+        reviewedAt: { type: Date, default: null },
+        decision:   { type: String, enum: ["approved", "rejected", null], default: null },
+        notes:      { type: String, default: null },
+      },
+
+      // Audit trail fields
+      submittedBy:   { type: mongoose.Schema.Types.ObjectId, ref: "Admin", default: null },
+      submitterRole: { type: String, default: null },
+      userAgent:     { type: String, default: null },
+      notes:         { type: String, default: null },
+    },
   },
   {
     timestamps: true,
@@ -128,11 +169,25 @@ const complaintSchema = new mongoose.Schema(
 // ====================
 // INDEXES
 // ====================
-// 2dsphere index for geospatial queries (nearby complaints)
 complaintSchema.index({ location: "2dsphere" });
 complaintSchema.index({ status: 1, category: 1 });
 complaintSchema.index({ user: 1 });
 complaintSchema.index({ createdAt: -1 });
+
+// ====================
+// TRS IMMUTABILITY GUARD
+// Once resolutionEvidence.submittedAt is written, block any further
+// modification to that field via the Mongoose save path.
+// The controller also uses an atomic $exists guard as the primary defence.
+// ====================
+complaintSchema.pre("save", function (next) {
+  if (!this.isNew && this.isModified("resolutionEvidence.submittedAt")) {
+    const err = new Error("resolutionEvidence is immutable after first submission");
+    err.statusCode = 409;
+    return next(err);
+  }
+  next();
+});
 
 // ====================
 // PRIORITY SCORE COMPUTATION

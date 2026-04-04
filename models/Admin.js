@@ -39,7 +39,8 @@ const adminSchema = new mongoose.Schema({
     wardNo: {
         type: Number,
         required: [true, 'Ward is required'],
-        max: [4, 'Ward cannot exceed 4 digits']
+        min: [1, 'Ward number must be at least 1'],
+        max: [9999, 'Ward number cannot exceed 4 digits']
     }
 }, {
     timestamps: true
