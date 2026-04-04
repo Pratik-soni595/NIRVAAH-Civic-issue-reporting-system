@@ -1,0 +1,86 @@
+<%- include('../partials/head') %>
+<%- include('../partials/admin-navbar') %>
+<%- include('../partials/commissioner-sidebar', {page: 'comm-escalations'}) %>
+
+<div class="admin-content">
+  <div class="admin-header">
+    <h1 style="color: #1e3a8a;">Active Escalations</h1>
+    <p>Complaints that are overdue or explicitly escalated across all zones</p>
+  </div>
+
+  <div class="table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Location</th>
+          <th>Level</th>
+          <th>Deadline</th>
+          <th>Status</th>
+          <th>Raised By</th>
+        </tr>
+      </thead>
+      <tbody id="escalationsTable">
+        <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+/* Navy overrides */
+.admin-table thead th {
+  background-color: #1e3a8a !important; /* Navy */
+}
+.level-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-weight: 600;
+  color: white;
+}
+.level-2 { background-color: #d97706; }
+.level-3 { background-color: #dc2626; }
+.overdue { color: #dc2626; font-weight: bold; }
+</style>
+
+<script>
+async function loadData() {
+  try {
+    const res = await fetch('/api/commissioner/escalations', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    const data = await res.json();
+    if(data.success) {
+      renderTable(data.escalations);
+    } else {
+      console.error(data.message);
+    }
+  } catch(e) {
+    console.error('Failed to load escalations');
+  }
+}
+
+function renderTable(items) {
+  const tbody = document.getElementById('escalationsTable');
+  tbody.innerHTML = '';
+  if (items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No active escalations. Everything is on track.</td></tr>';
+    return;
+  }
+  items.forEach(item => {
+    const isOverdue = new Date(item.deadline) < new Date();
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${item.title}</strong></td>
+      <td>${item.location?.address || 'Unknown'}</td>
+      <td><span class="level-badge level-${item.level}">Level ${item.level}</span></td>
+      <td class="${isOverdue ? 'overdue' : ''}">${item.deadline ? new Date(item.deadline).toLocaleDateString() : 'N/A'}</td>
+      <td><span class="status-${item.status}">${(item.status || '').toUpperCase()}</span></td>
+      <td>${item.user?.name || 'Unknown'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', loadData);
+</script>

@@ -20,7 +20,11 @@ const protect = (req, res, next) => {
       });
     }
     req.user = user;
+    // Extract accountType from Passport info first, then fallbacks
     req.accountType = info?.accountType || user?.accountType || user?.role || 'citizen';
+    if (user.role === 'commissioner') {
+      req.accountType = 'commissioner';
+    }
     next();
   })(req, res, next);
 };

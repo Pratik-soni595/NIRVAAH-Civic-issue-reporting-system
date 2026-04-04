@@ -4,6 +4,7 @@
  */
 const User = require("../models/User");
 const Admin = require("../models/Admin");
+const { validateCommissionerLogin, getCommissionerById } = require("../utils/commissionerAuth");
 const { validationResult } = require("express-validator");
 const nodemailer = require("nodemailer");
 
@@ -51,7 +52,15 @@ setInterval(() => {
 
 // Helper to send token response
 const sendTokenResponse = (user, statusCode, res, message = "Success", accountType = "citizen") => {
-  const token = user.generateJWT();
+  let token;
+  if (typeof user.generateJWT === 'function') {
+    token = user.generateJWT();
+  } else {
+    const jwt = require("jsonwebtoken");
+    token = jwt.sign({ id: user._id, accountType }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRE || '30d'
+    });
+  }
 
   res.status(statusCode).json({
     success: true,
@@ -129,6 +138,11 @@ exports.login = async (req, res, next) => {
 
     const { email, password } = req.body;
 
+    const commissioner = await validateCommissionerLogin(email, password);
+    if (commissioner) {
+      return sendTokenResponse(commissioner, 200, res, "Logged in successfully", "commissioner");
+    }
+
     let user = await Admin.findOne({ email }).select("+password");
     let accountType = "admin";
 
@@ -177,21 +191,28 @@ exports.sendOtp = async (req, res, next) => {
     const { email, password } = req.body;
     console.log("[OTP] sendOtp request for", email);
 
-    let user = await Admin.findOne({ email }).select("+password");
-    let accountType = "admin";
-    if (!user) {
-      user = await User.findOne({ email }).select("+password");
-      accountType = "citizen";
+    let user;
+    let accountType;
+    let isMatch = false;
+
+    const commissioner = await validateCommissionerLogin(email, password);
+    if (commissioner) {
+      user = commissioner;
+      accountType = "commissioner";
+      isMatch = true;
+    } else {
+      user = await Admin.findOne({ email }).select("+password");
+      accountType = "admin";
+      if (!user) {
+        user = await User.findOne({ email }).select("+password");
+        accountType = "citizen";
+      }
+      if (user) {
+        isMatch = await user.comparePassword(password);
+      }
     }
 
-    if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid credentials" });
-    }
-
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
+    if (!user || !isMatch) {
       return res
         .status(401)
         .json({ success: false, message: "Invalid credentials" });
@@ -279,7 +300,9 @@ exports.verifyOtp = async (req, res, next) => {
     console.log(`[OTP] Verified successfully for session: ${sessionId}`);
 
     let user;
-    if (otpData.accountType === "admin") {
+    if (otpData.accountType === "commissioner") {
+      user = getCommissionerById(otpData.userId);
+    } else if (otpData.accountType === "admin") {
       user = await Admin.findById(otpData.userId);
     } else {
       user = await User.findById(otpData.userId);
@@ -291,8 +314,10 @@ exports.verifyOtp = async (req, res, next) => {
         .json({ success: false, message: "User not found" });
     }
 
-    user.lastLogin = new Date();
-    await user.save({ validateBeforeSave: false });
+    if (otpData.accountType !== "commissioner") {
+      user.lastLogin = new Date();
+      await user.save({ validateBeforeSave: false });
+    }
 
     // Complete login
     sendTokenResponse(user, 200, res, "OTP verified, logged in successfully", otpData.accountType);
@@ -330,7 +355,9 @@ exports.resendOtp = async (req, res, next) => {
     otpData.attempts = 0;
 
     let user;
-    if (otpData.accountType === "admin") {
+    if (otpData.accountType === "commissioner") {
+      user = getCommissionerById(otpData.userId);
+    } else if (otpData.accountType === "admin") {
       user = await Admin.findById(otpData.userId);
     } else {
       user = await User.findById(otpData.userId);
@@ -354,7 +381,9 @@ exports.resendOtp = async (req, res, next) => {
 exports.getMe = async (req, res, next) => {
   try {
     let user;
-    if (req.accountType === "admin") {
+    if (req.accountType === "commissioner") {
+      user = getCommissionerById(req.user.id);
+    } else if (req.accountType === "admin") {
       user = await Admin.findById(req.user.id);
     } else {
       user = await User.findById(req.user.id);
@@ -371,7 +400,9 @@ exports.updateProfile = async (req, res, next) => {
   try {
     const { name, avatar } = req.body;
     let user;
-    if (req.accountType === "admin") {
+    if (req.accountType === "commissioner") {
+      return res.status(403).json({ success: false, message: "Commissioner profile is hardcoded" });
+    } else if (req.accountType === "admin") {
       user = await Admin.findByIdAndUpdate(
         req.user.id,
         { name, avatar },

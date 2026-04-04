@@ -22,6 +22,7 @@ const adminRoutes = require("./routes/admin");
 const adminPriorityRoutes = require("./routes/adminPriority");
 const notificationRoutes = require("./routes/notifications");
 const userRoutes = require("./routes/users");
+const commissionerRoutes = require("./routes/commissioner");
 const viewRoutes = require("./routes/views"); // EJS page routes
 const langRoutes = require("./routes/lang");
 
@@ -102,6 +103,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin-priority", adminPriorityRoutes);
+app.use("/api/commissioner", commissionerRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/chatbot", require("./routes/chatbot"));

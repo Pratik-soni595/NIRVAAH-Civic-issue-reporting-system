@@ -2,6 +2,7 @@ const Complaint = require("../models/Complaint");
 const PriorityWorkflow = require("../models/PriorityWorkflow");
 const User = require("../models/User");
 const { createNotification } = require("../controllers/notificationController");
+const PriorityService = require("./priorityService");
 
 const STATUS_TRANSITIONS = {
   pending: ["approved"],
@@ -11,17 +12,6 @@ const STATUS_TRANSITIONS = {
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-function derivePriority(votes) {
-  if (votes >= 10) return "high";
-  if (votes >= 5) return "medium";
-  return "low";
-}
-
-function deriveDeadline(createdAt, priority) {
-  const days = priority === "high" ? 2 : priority === "medium" ? 5 : 7;
-  return new Date(new Date(createdAt).getTime() + days * DAY_MS);
-}
 
 function deriveCountdownMeta(deadline) {
   const now = Date.now();
@@ -76,8 +66,8 @@ exports.listDashboard = async ({ priority, status, overdue }) => {
       status: "pending",
       level: 1,
     };
-    const computedPriority = derivePriority(c.voteCount || 0);
-    const deadline = deriveDeadline(c.createdAt, computedPriority);
+    const computedPriority = PriorityService.calculatePriority(c.voteCount || 0);
+    const deadline = PriorityService.calculateDeadline(c.createdAt, computedPriority);
     const countdown = deriveCountdownMeta(deadline);
 
     return {

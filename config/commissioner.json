@@ -1,0 +1,9 @@
+{
+  "id": "commissioner-001",
+  "name": "Nirvaah Commissioner",
+  "email": "commissioner@nirvaah.gov",
+  "passwordHash": "$2a$10$BLBwp.lw.IqEyBv0oqx3UelU5TG2SD0sZWwQ/k8xXXHDq9xwu3JX2",
+  "role": "commissioner",
+  "designation": "Municipal Commissioner",
+  "zone": "Central"
+}

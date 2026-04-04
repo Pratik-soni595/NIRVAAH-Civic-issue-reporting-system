@@ -1,0 +1,74 @@
+<%- include('../partials/head') %>
+<%- include('../partials/admin-navbar') %>
+<%- include('../partials/commissioner-sidebar', {page: 'comm-dashboard'}) %>
+
+<div class="admin-content">
+  <div class="admin-header">
+    <h1 style="color: #1e3a8a;">Executive Summary</h1>
+    <p>High-level overview of city-wide civic issues</p>
+  </div>
+
+  <div class="stats-grid" id="dashboardStats">
+    <div class="stat-card" style="border-left: 4px solid #1e3a8a;">
+      <div class="stat-icon" style="background: rgba(30, 58, 138, 0.1); color: #1e3a8a;">&#9888;</div>
+      <div class="stat-content">
+        <h3 id="activeEscCount">-</h3>
+        <p>Active Escalated Issues</p>
+      </div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #16a34a;">
+      <div class="stat-icon" style="background: rgba(22, 163, 74, 0.1); color: #16a34a;">&#10003;</div>
+      <div class="stat-content">
+        <h3 id="resolvedEscCount">-</h3>
+        <p>Resolved Escalations</p>
+      </div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #d97706;">
+      <div class="stat-icon" style="background: rgba(217, 119, 6, 0.1); color: #d97706;">&#128101;</div>
+      <div class="stat-content">
+        <h3 id="adminCount">-</h3>
+        <p>Active Staff & Admins</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-widgets" style="margin-top: 2rem;">
+    <!-- Welcome info directly from token -->
+    <div class="widget">
+      <h3>Welcome to the Command Center</h3>
+      <p style="margin-top: 1rem; color: var(--text-muted); line-height: 1.5;">
+        As the Municipal Commissioner, this dashboard provides macro-level tracking of service accountability. 
+        Focus heavily on <a href="/commissioner/escalations" style="color: #1e3a8a; font-weight: 500;">Active Escalations</a> 
+        to ensure critical, high-vote issues and severely overdue reports are assigned and remediated promptly.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadDashStats() {
+  try {
+    const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    
+    // Dispatch parallel requests to endpoints to fill up stats
+    const [escRes, resRes, admRes] = await Promise.all([
+      fetch('/api/commissioner/escalations', { headers }),
+      fetch('/api/commissioner/resolved-escalations', { headers }),
+      fetch('/api/commissioner/admin-list', { headers })
+    ]);
+
+    const escData = await escRes.json();
+    const resData = await resRes.json();
+    const admData = await admRes.json();
+
+    if(escData.success) document.getElementById('activeEscCount').textContent = escData.escalations.length;
+    if(resData.success) document.getElementById('resolvedEscCount').textContent = resData.escalations.length;
+    if(admData.success) document.getElementById('adminCount').textContent = admData.admins.length;
+
+  } catch(e) {
+    console.error('Failed to load dashboard stats');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadDashStats);
+</script>

@@ -7,12 +7,25 @@
  * Admin guard middleware — must be used AFTER protect middleware
  */
 const adminOnly = (req, res, next) => {
-  if (req.accountType === 'admin' || (req.user && req.user.role === 'admin')) {
+  if (req.accountType === 'admin') {
     return next();
   }
   return res.status(403).json({
     success: false,
     message: 'Access denied. Admin privileges required.'
+  });
+};
+
+/**
+ * Commissioner guard middleware — must be used AFTER protect middleware
+ */
+const commissionerOnly = (req, res, next) => {
+  if (req.accountType === 'commissioner') {
+    return next();
+  }
+  return res.status(403).json({
+    success: false,
+    message: 'Access denied. Commissioner privileges required.'
   });
 };
 
@@ -33,4 +46,4 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = { adminOnly, authorize };
+module.exports = { adminOnly, commissionerOnly, authorize };

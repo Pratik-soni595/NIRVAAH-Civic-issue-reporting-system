@@ -244,13 +244,8 @@ class PriorityService {
    * Initialize service - set up cron job for escalation checks
    */
   static init() {
-    // Check for overdue complaints every hour
-    setInterval(
-      () => {
-        this.checkAndEscalateOverdue().catch(console.error);
-      },
-      60 * 60 * 1000,
-    ); // 1 hour
+    // Check for overdue complaints is now managed by adminPriorityModuleScheduler.js
+    // Left empty to prevent duplicate triggers.
   }
 }
 

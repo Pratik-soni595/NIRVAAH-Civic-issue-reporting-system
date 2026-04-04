@@ -1,0 +1,65 @@
+<!-- COMMISSIONER SIDEBAR -->
+<div class="admin-sidebar commissioner-sidebar" id="adminSidebar">
+  <div class="admin-sidebar-brand" style="background: linear-gradient(135deg, #1e3a8a, #1e40af);">
+    <div class="admin-sidebar-badge">C</div>
+    <div>
+      <div class="admin-sidebar-title">Commissioner HQ</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">
+      Overview
+    </div>
+    <ul class="sidebar-menu">
+      <li>
+        <a
+          href="/commissioner/dashboard"
+          class="<%= navPage==='comm-dashboard'?'active':'' %>"
+        >
+          <span>Executive Summary</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">
+      Action Center
+    </div>
+    <ul class="sidebar-menu">
+      <li>
+        <a
+          href="/commissioner/escalations"
+          class="<%= navPage==='comm-escalations'?'active':'' %>"
+        >
+          <span>Active Escalations</span>
+        </a>
+      </li>
+      <li>
+        <a
+          href="/commissioner/resolved-escalations"
+          class="<%= navPage==='comm-resolved'?'active':'' %>"
+        >
+          <span>Resolved Incidents</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">
+      Workforce
+    </div>
+    <ul class="sidebar-menu">
+      <li>
+        <a
+          href="/commissioner/admin-list"
+          class="<%= navPage==='comm-admin-list'?'active':'' %>"
+        >
+          <span>Admin Roster</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>

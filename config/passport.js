@@ -5,6 +5,7 @@
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
 const User = require('../models/User');
 const Admin = require('../models/Admin');
+const { getCommissionerById } = require('../utils/commissionerAuth');
 
 const opts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -17,7 +18,9 @@ module.exports = (passport) => {
       try {
         const accountType = jwt_payload.accountType || (jwt_payload.role === 'admin' ? 'admin' : 'citizen');
         let user;
-        if (accountType === 'admin') {
+        if (accountType === 'commissioner') {
+          user = getCommissionerById(jwt_payload.id);
+        } else if (accountType === 'admin') {
           user = await Admin.findById(jwt_payload.id).select('-password');
         } else {
           user = await User.findById(jwt_payload.id).select('-password');

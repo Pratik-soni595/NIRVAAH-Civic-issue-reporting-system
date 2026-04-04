@@ -20,7 +20,18 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['status_change', 'vote_received', 'complaint_resolved', 'system'],
+    enum: [
+      'status_change', 
+      'vote_received', 
+      'complaint_resolved', 
+      'system',
+      'priority_change',
+      'escalation',
+      'admin_status_update',
+      'priority_workflow_status',
+      'priority_workflow_escalation',
+      'priority_workflow_deadline'
+    ],
     default: 'status_change'
   },
   complaint: {

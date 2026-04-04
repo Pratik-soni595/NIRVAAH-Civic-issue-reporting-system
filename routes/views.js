@@ -133,6 +133,37 @@ router.get("/admin/leaderboard", (req, res) =>
   }),
 );
 
+// ── Commissioner pages ──────────────────────────────
+router.get("/commissioner", (req, res) => res.redirect("/commissioner/escalations"));
+
+router.get("/commissioner/dashboard", (req, res) =>
+  res.render("commissioner/dashboard", {
+    title: "Commissioner Dashboard – NIRVAAH",
+    navPage: "comm-dashboard",
+  }),
+);
+
+router.get("/commissioner/escalations", (req, res) =>
+  res.render("commissioner/escalations", {
+    title: "Escalations – NIRVAAH",
+    navPage: "comm-escalations",
+  }),
+);
+
+router.get("/commissioner/admin-list", (req, res) =>
+  res.render("commissioner/admin-list", {
+    title: "Admin List – NIRVAAH",
+    navPage: "comm-admin-list",
+  }),
+);
+
+router.get("/commissioner/resolved-escalations", (req, res) =>
+  res.render("commissioner/resolved-escalations", {
+    title: "Resolved Escalations – NIRVAAH",
+    navPage: "comm-resolved",
+  }),
+);
+
 // 404
 router.use((req, res) =>
   res.status(404).render("404", { title: "404 – NIRVAAH" }),

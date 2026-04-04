@@ -1,0 +1,72 @@
+<%- include('../partials/head') %>
+<%- include('../partials/admin-navbar') %>
+<%- include('../partials/commissioner-sidebar', {page: 'comm-admin-list'}) %>
+
+<div class="admin-content">
+  <div class="admin-header">
+    <h1 style="color: #1e3a8a;">Admin Roster</h1>
+    <p>Directory and performance stats of active administrative staff</p>
+  </div>
+
+  <div class="table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Zone / Ward</th>
+          <th>Tasks Handled</th>
+          <th>Active Tasks</th>
+        </tr>
+      </thead>
+      <tbody id="adminsTable">
+        <tr><td colspan="5" style="text-align: center;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+/* Navy overrides */
+.admin-table thead th {
+  background-color: #1e3a8a !important; /* Navy */
+}
+</style>
+
+<script>
+async function loadData() {
+  try {
+    const res = await fetch('/api/commissioner/admin-list', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    const data = await res.json();
+    if(data.success) {
+      renderTable(data.admins);
+    }
+  } catch(e) {
+    console.error('Failed to load admins');
+  }
+}
+
+function renderTable(items) {
+  const tbody = document.getElementById('adminsTable');
+  tbody.innerHTML = '';
+  if (items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No admins found.</td></tr>';
+    return;
+  }
+  items.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${item.name}</strong></td>
+      <td>${item.email}</td>
+      <td>Ward ${item.wardNo || 'N/A'}</td>
+      <td>${item.tasksHandled}</td>
+      <td>${item.activeTasks}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', loadData);
+</script>

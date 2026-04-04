@@ -1,0 +1,78 @@
+<%- include('../partials/head') %>
+<%- include('../partials/admin-navbar') %>
+<%- include('../partials/commissioner-sidebar', {page: 'comm-resolved'}) %>
+
+<div class="admin-content">
+  <div class="admin-header">
+    <h1 style="color: #1e3a8a;">Resolved Escalations</h1>
+    <p>Historical record of high-priority issues that were successfully resolved</p>
+  </div>
+
+  <div class="table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Max Level Reached</th>
+          <th>Resolved Date</th>
+          <th>Resolved By</th>
+        </tr>
+      </thead>
+      <tbody id="resolvedTable">
+        <tr><td colspan="4" style="text-align: center;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+/* Navy overrides */
+.admin-table thead th {
+  background-color: #1e3a8a !important; /* Navy */
+}
+.level-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-weight: 600;
+  color: white;
+}
+.level-2 { background-color: #d97706; }
+.level-3 { background-color: #dc2626; }
+</style>
+
+<script>
+async function loadData() {
+  try {
+    const res = await fetch('/api/commissioner/resolved-escalations', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    const data = await res.json();
+    if(data.success) {
+      renderTable(data.escalations);
+    }
+  } catch(e) {
+    console.error('Failed to load resolved escalations');
+  }
+}
+
+function renderTable(items) {
+  const tbody = document.getElementById('resolvedTable');
+  tbody.innerHTML = '';
+  if (items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No resolved escalations.</td></tr>';
+    return;
+  }
+  items.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${item.title}</strong></td>
+      <td><span class="level-badge level-${item.level}">Level ${item.level}</span></td>
+      <td>${item.resolvedAt ? new Date(item.resolvedAt).toLocaleDateString() : 'Unknown'}</td>
+      <td>${item.user?.name || 'System'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', loadData);
+</script>

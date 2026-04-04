@@ -52,6 +52,16 @@ const complaintSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    deadline: {
+      type: Date,
+      default: null,
+    },
+    level: {
+      type: Number,
+      default: 1,
+      min: 1,
+      max: 3,
+    },
     images: [
       {
         url: String,
