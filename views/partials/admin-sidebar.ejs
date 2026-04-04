@@ -1,0 +1,86 @@
+<!-- ADMIN SIDEBAR -->
+<div class="admin-sidebar" id="adminSidebar">
+  <div class="admin-sidebar-brand">
+    <div class="admin-sidebar-badge">N</div>
+    <div>
+      <div class="admin-sidebar-title">NIRVAAH Admin</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label" data-i18n="sidebarOverview">
+      <%= __('sidebarOverview') %>
+    </div>
+    <ul class="sidebar-menu">
+      <li>
+        <a
+          href="/admin/dashboard"
+          class="<%= navPage==='admin-dash'?'active':'' %>"
+        >
+          <span><%= __('sidebarDashboard') %></span>
+        </a>
+      </li>
+      <li>
+        <a
+          href="/admin/analytics"
+          class="<%= navPage==='admin-analytics'?'active':'' %>"
+        >
+          <span><%= __('sidebarAnalytics') %></span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label" data-i18n="sidebarManagement">
+      <%= __('sidebarManagement') %>
+    </div>
+    <ul class="sidebar-menu">
+      <li>
+        <a
+          href="/admin/complaints"
+          class="<%= navPage==='admin-complaints'?'active':'' %>"
+        >
+          <span><%= __('sidebarAllComplaints') %></span>
+        </a>
+      </li>
+      <li>
+        <a
+          href="/admin/priority-dashboard"
+          class="<%= navPage==='priority-dashboard'?'active':'' %>"
+        >
+          <span>Priority Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a
+          href="/admin/priority-module"
+          class="<%= navPage==='priority-module'?'active':'' %>"
+        >
+          <span>Priority Module</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label" data-i18n="sidebarTools">
+      <%= __('sidebarTools') %>
+    </div>
+    <ul class="sidebar-menu">
+      <li>
+        <a href="/admin/map" class="<%= navPage==='admin-map'?'active':'' %>">
+          <span><%= __('sidebarLiveMap') %></span>
+        </a>
+      </li>
+      <li>
+        <a
+          href="/admin/leaderboard"
+          class="<%= navPage==='admin-leaderboard'?'active':'' %>"
+        >
+          <span><%= __('sidebarLeaderboard') %></span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
