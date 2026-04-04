@@ -1,0 +1,164 @@
+<%- include('../partials/head') %>
+<%- include('../partials/admin-navbar') %>
+<%- include('../partials/admin-sidebar', {navPage: 'priority-module'}) %>
+
+<div class="admin-content" style="padding:1.25rem;">
+  <h2 style="margin:0 0 .5rem 0;">Priority Workflow Module</h2>
+  <p style="margin:0 0 1rem 0;color:#6b7280;">Independent vote-based timeline module (non-breaking).</p>
+
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+    <select id="pm-priority" class="report-select" style="max-width:180px;">
+      <option value="">All Priority</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+    <select id="pm-status" class="report-select" style="max-width:200px;">
+      <option value="">All Status</option>
+      <option value="pending">Pending</option>
+      <option value="approved">Approved</option>
+      <option value="in_progress">In Progress</option>
+      <option value="resolved">Resolved</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:.35rem;">
+      <input id="pm-overdue" type="checkbox"> Overdue only
+    </label>
+    <button id="pm-filter" class="report-btn report-btn-primary">Apply</button>
+    <button id="pm-escalate" class="report-btn report-btn-outline">Run Escalation</button>
+  </div>
+
+  <div style="overflow:auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;">
+    <table style="width:100%;border-collapse:collapse;min-width:980px;">
+      <thead style="background:#f9fafb;">
+        <tr>
+          <th style="padding:.75rem;text-align:left;">Title</th>
+          <th style="padding:.75rem;text-align:left;">Category</th>
+          <th style="padding:.75rem;text-align:left;">Location</th>
+          <th style="padding:.75rem;text-align:left;">Votes</th>
+          <th style="padding:.75rem;text-align:left;">Priority</th>
+          <th style="padding:.75rem;text-align:left;">Deadline</th>
+          <th style="padding:.75rem;text-align:left;">Countdown</th>
+          <th style="padding:.75rem;text-align:left;">Status</th>
+          <th style="padding:.75rem;text-align:left;">Level</th>
+          <th style="padding:.75rem;text-align:left;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="pm-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const pmState = { data: [] };
+
+function fmtDate(input) {
+  const d = new Date(input);
+  return d.toLocaleString();
+}
+
+function fmtCountdown(meta) {
+  if (!meta) return 'N/A';
+  if (meta.isOverdue) return `Overdue by ${Math.abs(meta.hoursLeft)}h`;
+  return `${meta.hoursLeft}h left`;
+}
+
+function statusOptions(current) {
+  const map = {
+    pending: ['approved'],
+    approved: ['in_progress'],
+    in_progress: ['resolved'],
+    resolved: []
+  };
+  return map[current] || [];
+}
+
+function renderRows() {
+  const body = document.getElementById('pm-body');
+  body.innerHTML = pmState.data.map((item) => {
+    const options = statusOptions(item.status).map((s) => `<option value="${s}">${s.replace('_', ' ')}</option>`).join('');
+    const color = item.countdown?.color || 'green';
+
+    return `
+      <tr style="border-top:1px solid #f3f4f6;">
+        <td style="padding:.75rem;">${item.title}</td>
+        <td style="padding:.75rem;">${item.category}</td>
+        <td style="padding:.75rem;">${item.location?.address || 'N/A'}</td>
+        <td style="padding:.75rem;">${item.votes}</td>
+        <td style="padding:.75rem;text-transform:uppercase;">${item.priority}</td>
+        <td style="padding:.75rem;">${fmtDate(item.deadline)}</td>
+        <td style="padding:.75rem;color:${color === 'red' ? '#dc2626' : color === 'yellow' ? '#d97706' : '#16a34a'};font-weight:600;">${fmtCountdown(item.countdown)}</td>
+        <td style="padding:.75rem;">${item.status.replace('_', ' ')}</td>
+        <td style="padding:.75rem;">Level ${item.level}</td>
+        <td style="padding:.75rem;display:flex;gap:.5rem;align-items:center;">
+          <select id="pm-next-${item.complaintId}" style="padding:.35rem;" ${options ? '' : 'disabled'}>
+            <option value="">Next</option>
+            ${options}
+          </select>
+          <button class="report-btn report-btn-outline" onclick="updateStage('${item.complaintId}')" ${options ? '' : 'disabled'}>Update</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function loadDashboard() {
+  const priority = document.getElementById('pm-priority').value;
+  const status = document.getElementById('pm-status').value;
+  const overdue = document.getElementById('pm-overdue').checked;
+
+  const params = new URLSearchParams();
+  if (priority) params.set('priority', priority);
+  if (status) params.set('status', status);
+  if (overdue) params.set('overdue', 'true');
+
+  const res = await fetch(`/api/admin-priority/dashboard?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('nirvaah_token') || ''}` }
+  });
+  const data = await res.json();
+  if (!data.success) throw new Error(data.message || 'Failed');
+  pmState.data = data.complaints;
+  renderRows();
+}
+
+async function updateStage(complaintId) {
+  const next = document.getElementById(`pm-next-${complaintId}`).value;
+  if (!next) return;
+
+  const res = await fetch(`/api/admin-priority/${complaintId}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('nirvaah_token') || ''}`
+    },
+    body: JSON.stringify({ status: next, note: 'Updated from priority module' })
+  });
+  const data = await res.json();
+  if (!data.success) {
+    alert(data.message || 'Status update failed');
+    return;
+  }
+  await loadDashboard();
+}
+
+async function runEscalationJob() {
+  const res = await fetch('/api/admin-priority/jobs/escalation', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${localStorage.getItem('nirvaah_token') || ''}` }
+  });
+  const data = await res.json();
+  if (!data.success) {
+    alert(data.message || 'Escalation failed');
+    return;
+  }
+  await loadDashboard();
+}
+
+document.getElementById('pm-filter').addEventListener('click', loadDashboard);
+document.getElementById('pm-escalate').addEventListener('click', runEscalationJob);
+
+setInterval(loadDashboard, 30000);
+loadDashboard().catch((err) => alert(err.message));
+</script>
+
+</body>
+</html>

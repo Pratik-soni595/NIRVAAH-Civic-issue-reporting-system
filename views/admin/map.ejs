@@ -1,0 +1,100 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/admin-navbar') %>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<div style="display:flex;min-height:100vh;padding-top:72px">
+  <%- include('../partials/admin-sidebar', {navPage}) %>
+
+  <div class="admin-main">
+    <div class="page-header d-flex justify-between align-center flex-wrap gap-2 mb-3">
+      <div>
+        <h1 data-i18n="liveIssueMapAdmin"><%= __('liveIssueMapAdmin') %></h1>
+        <p class="text-muted" data-i18n="liveIssueMapDescAdmin"><%= __('liveIssueMapDescAdmin') %></p>
+      </div>
+      <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;gap:.5rem;align-items:center;font-size:.8rem">
+          <span style="width:12px;height:12px;border-radius:50%;background:#ef4444;display:inline-block"></span><%= __('pending') %>
+          <span style="width:12px;height:12px;border-radius:50%;background:#f59e0b;display:inline-block;margin-left:.5rem"></span><%= __('inProgress') %>
+          <span style="width:12px;height:12px;border-radius:50%;background:#10b981;display:inline-block;margin-left:.5rem"></span><%= __('resolved') %>
+        </div>
+        <select id="mapFilter" class="form-control" style="width:auto;padding:.4rem .75rem;font-size:.85rem;background:var(--bg);color:var(--text);border:1px solid var(--border)" onchange="applyFilter()">
+          <option value="" data-i18n="allCategories"><%= __('allCategories') %></option>
+          <% [['pothole','🕳️ '+__('catPothole')],['garbage','🗑️ '+__('catGarbage')],['water_leakage','💧 '+__('catWaterLeak')],['electricity','⚡ '+__('catElectricity')],['road_damage','🛣️ '+__('catRoadDamage')],['street_light','💡 '+__('catStreetLight')],['sewage','🌊 '+__('catSewage')],['other','📍 '+__('catOther')]].forEach(([v,l]) => { %>
+            <option value="<%= v %>"><%= l %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+
+    <div id="map" style="height:60vh;min-height:400px;border-radius:var(--radius);border:1px solid var(--border)"></div>
+
+    <div class="stats-grid mt-4">
+      <div class="stat-card"><div class="stat-number primary" id="mapTotal">–</div><div class="stat-label" data-i18n="totalIssues"><%= __('totalIssues') %></div></div>
+      <div class="stat-card"><div class="stat-number" style="color:var(--pending)" id="mapPending">–</div><div class="stat-label" data-i18n="pending"><%= __('pending') %></div></div>
+      <div class="stat-card"><div class="stat-number" style="color:var(--in-progress)" id="mapInProgress">–</div><div class="stat-label" data-i18n="inProgress"><%= __('inProgress') %></div></div>
+      <div class="stat-card"><div class="stat-number" style="color:var(--resolved)" id="mapResolved">–</div><div class="stat-label" data-i18n="resolved"><%= __('resolved') %></div></div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/scripts') %>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+if (!window.NIRVAAH?.Auth.isLoggedIn() || !window.NIRVAAH.Auth.isAdmin()) {
+  window.location.href = '/login';
+}
+
+const catIcons = {pothole:'🕳️',garbage:'🗑️',water_leakage:'💧',electricity:'⚡',road_damage:'🛣️',street_light:'💡',sewage:'🌊',tree_hazard:'🌳',graffiti:'🎨',other:'📍'};
+const statusColors = {pending:'#ef4444',in_progress:'#f59e0b',resolved:'#10b981'};
+const statusLabels = {pending:'<%= __("pending") %>',in_progress:'<%= __("inProgress") %>',resolved:'<%= __("resolved") %>'};
+
+let map, all = [], markers = [];
+
+function initMap() {
+  map = L.map('map').setView([20.5937, 78.9629], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+}
+
+function clearMarkers() { markers.forEach(m => map.removeLayer(m)); markers = []; }
+
+function renderMarkers(list) {
+  clearMarkers();
+  let p=0, ip=0, r=0;
+  list.forEach(c => {
+    if (!c.location?.coordinates) return;
+    const [lng, lat] = c.location.coordinates;
+    const color = statusColors[c.status]||'#6366f1';
+    const m = L.marker([lat, lng], { icon: L.divIcon({ className:'', html:`<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,.8);box-shadow:0 2px 8px rgba(0,0,0,.5)"></div>`, iconSize:[14,14], iconAnchor:[7,7] }) }).addTo(map);
+    m.bindPopup(`<div style="min-width:180px"><div style="font-weight:700;margin-bottom:.35rem">${catIcons[c.category]||'📍'} ${c.title}</div><div style="font-size:.8rem;color:#888;margin-bottom:.5rem">${c.location.address||''}</div><span style="padding:2px 8px;border-radius:999px;font-size:.7rem;font-weight:600;background:${color}22;color:${color};border:1px solid ${color}44">${statusLabels[c.status]}</span><div style="font-size:.78rem;color:#888;margin-top:.5rem">👍 ${c.voteCount||0} <%= __("votesText") %></div><a href="/admin/complaint?id=${c._id}" style="display:block;margin-top:.5rem;font-size:.78rem;color:#6366f1;font-weight:600" target="_blank"><%= __("viewLink") %></a></div>`);
+    markers.push(m);
+    if (c.status==='pending') p++; else if (c.status==='in_progress') ip++; else r++;
+  });
+  document.getElementById('mapTotal').textContent = list.length;
+  document.getElementById('mapPending').textContent = p;
+  document.getElementById('mapInProgress').textContent = ip;
+  document.getElementById('mapResolved').textContent = r;
+}
+
+function applyFilter() {
+  const cat = document.getElementById('mapFilter').value;
+  renderMarkers(cat ? all.filter(c => c.category===cat) : all);
+}
+
+async function loadMap() {
+  try {
+    const data = await window.NIRVAAH.Admin.getComplaints({ limit: 500 }); // Admin fetch to bypass visibility restrictions
+    all = data.complaints || [];
+    renderMarkers(all);
+    const bounds = all.filter(c=>c.location?.coordinates).map(c=>[c.location.coordinates[1],c.location.coordinates[0]]);
+    if (bounds.length > 1) {
+        map.fitBounds(bounds, { padding:[30,30] });
+    }
+  } catch(e) { console.error('Error loading map data:', e); }
+}
+
+initMap();
+loadMap();
+</script>
+</body></html>

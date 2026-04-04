@@ -1,0 +1,107 @@
+<!-- PWA Install Button -->
+<style>
+  #pwaInstallBtn {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    z-index: 1050;
+    font-family: inherit;
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 4px 14px rgba(122,28,28,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 30px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s;
+    border: none;
+    outline: none;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    animation: pwa-pulse 2.5s infinite;
+  }
+  #pwaInstallBtn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(122,28,28,0.55);
+    animation: none;
+  }
+  #pwaInstallBtn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+  @keyframes pwa-pulse {
+    0%, 100% { box-shadow: 0 4px 14px rgba(122,28,28,0.3); }
+    50%        { box-shadow: 0 4px 22px rgba(122,28,28,0.6); }
+  }
+</style>
+
+<button id="pwaInstallBtn" aria-label="Install NIRVAAH App">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+  </svg>
+  <span>Install App</span>
+</button>
+
+<script>
+(function () {
+  var btn = document.getElementById('pwaInstallBtn');
+  if (!btn) return;
+
+  // Hide button if already running as installed PWA
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+    btn.style.display = 'none';
+    return;
+  }
+
+  // Click handler — uses prompt captured in head.ejs
+  btn.addEventListener('click', async function () {
+    var prompt = window._pwaInstallPrompt;
+    if (prompt) {
+      prompt.prompt();
+      try {
+        var result = await prompt.userChoice;
+        console.log('[PWA] User choice:', result.outcome);
+        if (result.outcome === 'accepted') {
+          window._pwaInstallPrompt = null;
+          btn.style.display = 'none';
+        }
+      } catch (err) {
+        console.error('[PWA] Prompt error:', err);
+      }
+    } else {
+      // No prompt captured — guide user manually
+      if (typeof showToast === 'function') {
+        showToast(
+          'Install NIRVAAH',
+          'Click the ⊕ icon in your browser address bar, or open the browser menu and select "Install App".',
+          'info'
+        );
+      } else {
+        alert('To install: click the install icon (⊕) in your browser address bar or use the browser menu → "Install App".');
+      }
+    }
+  });
+
+  // Keep listening in case prompt fires after button is rendered
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    window._pwaInstallPrompt = e;
+    btn.style.display = 'flex';
+    console.log('[PWA] Install prompt available (late capture).');
+  });
+
+  // Hide if installed via other means
+  window.addEventListener('appinstalled', function () {
+    window._pwaInstallPrompt = null;
+    btn.style.display = 'none';
+    if (typeof showToast === 'function') {
+      showToast('App Installed!', 'NIRVAAH has been added to your device.', 'success');
+    }
+  });
+})();
+</script>

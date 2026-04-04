@@ -1,0 +1,126 @@
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+<%- include('chatbot') %>
+
+<!-- COMMON JS -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/indexeddb.js"></script>
+<script src="/js/languageSwitcher.js"></script>
+
+<!-- COMMON UTILITIES -->
+<script>
+  // ── Socket.io Setup ───────────────────────────────
+  let socket;
+  if (typeof io !== "undefined") {
+    socket = io();
+    const userData = window.NIRVAAH?.getUser();
+    if (userData && (userData.id || userData._id)) {
+      socket.emit("join", userData.id || userData._id);
+    }
+    socket.on("notification", (notif) => {
+      // Show real-time toaster for the notification
+      showToast(notif.title, notif.message, "info");
+      // Light up notification dot
+      const dot = document.getElementById("notifDot");
+      if (dot) dot.classList.remove("hidden");
+    });
+  }
+
+  // ── Toast ─────────────────────────────────────────
+  function showToast(title, msg, type = "info") {
+    const tc = document.getElementById("toastContainer");
+    const t = document.createElement("div");
+    t.className = `toast ${type}`;
+    t.innerHTML = `<div><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div>`;
+    tc.appendChild(t);
+    setTimeout(() => t.remove(), 4500);
+  }
+
+  // ── Nav avatar & dropdown ─────────────────────────
+  function initNavUser() {
+    const user = window.NIRVAAH?.getUser();
+    const el = document.getElementById("navAvatar");
+    if (el && user) el.textContent = user.name?.[0]?.toUpperCase() || "?";
+  }
+
+  function initDashboardHero() {
+    const user = window.NIRVAAH?.getUser();
+    const nameEl = document.getElementById("userName");
+    const avatarEl = document.getElementById("heroAvatar");
+    if (!user) return;
+    if (nameEl && user.name) nameEl.textContent = user.name;
+    if (avatarEl && user.name)
+      avatarEl.textContent = user.name.charAt(0).toUpperCase();
+  }
+
+  function toggleNavDropdown() {
+    document.getElementById("navDropdown")?.classList.toggle("hidden");
+  }
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#navAvatar") && !e.target.closest("#navDropdown")) {
+      document.getElementById("navDropdown")?.classList.add("hidden");
+    }
+  });
+
+  // ── Offline / Online detection ────────────────────
+  async function updateOfflineBanner() {
+    const banner = document.getElementById("offlineBanner");
+    if (!banner) return;
+    if (!navigator.onLine) {
+      banner.classList.add("show");
+      const count = (await window.NirvaahDB?.countPending?.()) ?? 0;
+      const el = document.getElementById("queueCount");
+      if (el) el.textContent = count;
+    } else {
+      banner.classList.remove("show");
+    }
+  }
+
+  window.addEventListener("offline", updateOfflineBanner);
+  window.addEventListener("online", async () => {
+    updateOfflineBanner();
+    if (window.NirvaahDB) {
+      const result = await window.NirvaahDB.syncPendingComplaints();
+      if (result.synced > 0)
+        showToast(
+          '<%= __("syncedTitle") %>',
+          `${result.synced} <%= __("offlineReportsUploaded") %>`,
+          "success",
+        );
+    }
+  });
+
+  // ── Service Worker ────────────────────────────────
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      // Register from root so scope defaults to '/' — controls ALL pages
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => {
+          reg.update();
+          console.log("[SW] Registered with scope:", reg.scope);
+        })
+        .catch((err) => console.error("[SW] Registration failed:", err));
+    });
+
+    // postMessage sync listener is removed; Service Worker natively processes Sync Queue now.
+  }
+
+  // Init on load
+  window.addEventListener("DOMContentLoaded", async () => {
+    initNavUser();
+    initDashboardHero();
+    updateOfflineBanner();
+    if (navigator.onLine && window.NirvaahDB) {
+      const result = await window.NirvaahDB.syncPendingComplaints();
+      if (result && result.synced > 0) {
+        showToast(
+          '<%= __("syncedTitle") %>',
+          `${result.synced} <%= __("offlineReportsUploaded") %>`,
+          "success"
+        );
+      }
+    }
+  });
+</script>
