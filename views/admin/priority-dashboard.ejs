@@ -1,0 +1,247 @@
+<%- include('../partials/admin-navbar') %>
+<%- include('../partials/admin-sidebar', {page: 'priority-dashboard'}) %>
+
+<div class="admin-content">
+  <div class="admin-header">
+    <h1>Priority Dashboard</h1>
+    <p>Vote-based priority system with automatic deadlines</p>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Priority:</label>
+      <select id="priorityFilter">
+        <option value="">All</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Status:</label>
+      <select id="statusFilter">
+        <option value="">All</option>
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="in_progress">In Progress</option>
+        <option value="resolved">Resolved</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Show Overdue:</label>
+      <input type="checkbox" id="overdueFilter">
+    </div>
+    <button id="applyFilters" class="btn-primary">Apply Filters</button>
+  </div>
+
+  <!-- Complaints Table -->
+  <div class="table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Location</th>
+          <th>Votes</th>
+          <th>Priority</th>
+          <th>Deadline</th>
+          <th>Status</th>
+          <th>Level</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="complaintsTable">
+        <!-- Data will be loaded here -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Status Update Modal -->
+<div id="statusModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Update Status</h3>
+      <span class="modal-close">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="statusForm">
+        <div class="form-group">
+          <label>New Status:</label>
+          <select id="newStatus" required>
+            <option value="approved">Approved</option>
+            <option value="in_progress">In Progress</option>
+            <option value="resolved">Resolved</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Note:</label>
+          <textarea id="statusNote" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn-primary">Update Status</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentComplaintId = null;
+
+async function loadComplaints() {
+  const priority = document.getElementById('priorityFilter').value;
+  const status = document.getElementById('statusFilter').value;
+  const overdue = document.getElementById('overdueFilter').checked;
+
+  const filters = {};
+  if (priority) filters.priority = priority;
+  if (status) filters.status = status;
+  if (overdue) filters.overdue = true;
+
+  try {
+    const response = await window.NIRVAAH.Admin.getPriorityDashboard(filters);
+    renderComplaints(response.complaints);
+  } catch (error) {
+    console.error('Error loading complaints:', error);
+  }
+}
+
+function renderComplaints(complaints) {
+  const tbody = document.getElementById('complaintsTable');
+  tbody.innerHTML = '';
+
+  complaints.forEach(complaint => {
+    const row = document.createElement('tr');
+
+    // Deadline status
+    let deadlineClass = '';
+    let deadlineText = 'No deadline';
+    if (complaint.deadline) {
+      const deadline = new Date(complaint.deadline);
+      deadlineText = deadline.toLocaleDateString();
+      if (complaint.isOverdue) {
+        deadlineClass = 'overdue';
+      } else if (complaint.daysLeft <= 1) {
+        deadlineClass = 'warning';
+      } else {
+        deadlineClass = 'good';
+      }
+    }
+
+    row.innerHTML = `
+      <td>${complaint.title}</td>
+      <td>${complaint.category}</td>
+      <td>${complaint.location?.address || 'N/A'}</td>
+      <td>${complaint.voteCount}</td>
+      <td><span class="priority-${complaint.priority}">${complaint.priority.toUpperCase()}</span></td>
+      <td class="${deadlineClass}">${deadlineText}</td>
+      <td>${complaint.status.replace('_', ' ').toUpperCase()}</td>
+      <td>Level ${complaint.level}</td>
+      <td>
+        <button onclick="openStatusModal('${complaint._id}')" class="btn-sm">Update Status</button>
+      </td>
+    `;
+
+    tbody.appendChild(row);
+  });
+}
+
+function openStatusModal(complaintId) {
+  currentComplaintId = complaintId;
+  document.getElementById('statusModal').style.display = 'block';
+}
+
+function closeModal() {
+  document.getElementById('statusModal').style.display = 'none';
+  currentComplaintId = null;
+}
+
+document.getElementById('statusForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const status = document.getElementById('newStatus').value;
+  const note = document.getElementById('statusNote').value;
+
+  try {
+    await window.NIRVAAH.Admin.updateStatus(currentComplaintId, status, note);
+    closeModal();
+    loadComplaints();
+    showToast('Status updated successfully');
+  } catch (error) {
+    showToast('Error updating status', 'error');
+  }
+});
+
+document.getElementById('applyFilters').addEventListener('click', loadComplaints);
+document.querySelector('.modal-close').addEventListener('click', closeModal);
+
+// Auto-refresh every 30 seconds
+setInterval(loadComplaints, 30000);
+
+// Initial load
+loadComplaints();
+</script>
+
+<style>
+.filters-section {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  align-items: center;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.priority-high { color: #dc2626; font-weight: bold; }
+.priority-medium { color: #d97706; font-weight: bold; }
+.priority-low { color: #16a34a; font-weight: bold; }
+
+.overdue { color: #dc2626; font-weight: bold; }
+.warning { color: #d97706; font-weight: bold; }
+.good { color: #16a34a; font-weight: bold; }
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background-color: white;
+  margin: 15% auto;
+  padding: 0;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 500px;
+}
+
+.modal-header {
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-close {
+  cursor: pointer;
+  font-size: 1.5rem;
+}
+
+.modal-body {
+  padding: 1rem;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+</style>
