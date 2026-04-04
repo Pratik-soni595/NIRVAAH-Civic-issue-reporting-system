@@ -1,0 +1,447 @@
+<%- include('partials/head') %>
+    <link rel="stylesheet" href="/css/dashboard-govt.css">
+    <%- include('partials/navbar', {navPage}) %>
+
+        <div class="page-wrapper">
+            <div class="container">
+                <section class="govt-hero">
+                    <div class="govt-hero-content">
+                        <h1 class="govt-title">
+                            <%= __('welcomeBack') %>, <span id="userName" style="color: #fff !important;">
+                                    <%= typeof user !=='undefined' && user && user.name ? user.name :
+                                        __('citizenFallback') %>
+                                </span>
+                        </h1>
+                        <p class="govt-subtitle"><span id="greeting" data-i18n="morning"></span>,
+                            <%= __('civicOverview') %>
+                        </p>
+                        <p class="hero-status mt-2" style="color: rgba(255,255,255,0.7);"><span class="status-dot"
+                                style="background:var(--bg)"></span> <span data-i18n="lastActivity">
+                                <%= __('lastActivity') %>
+                            </span>: <span id="heroLastActive">
+                                <%= __('today') %>
+                            </span></p>
+                    </div>
+                    <div class="govt-hero-actions">
+                        <a href="/report" class="btn btn-outline"
+                            style="background:#fff!important; color:var(--primary)!important; border:none!important;">
+                            <svg style="width:20px;height:20px;vertical-align:middle;margin-right:0.4rem;display:inline-block"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span data-i18n="reportIssue">
+                                <%= __('reportIssue') %>
+                            </span>
+                        </a>
+                    </div>
+                </section>
+
+                <section class="govt-stats-grid">
+                    <article class="govt-card govt-stat-card">
+                        <div class="govt-stat-header">
+                            <div class="govt-stat-icon-wrapper" style="color:#b48a3c; background:#fbf5eb">
+                                <span class="govt-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg></span>
+                            </div>
+                            <h3 class="govt-stat-title" data-i18n="myComplaints">
+                                <%= __('myComplaints') %>
+                            </h3>
+                        </div>
+                        <div class="govt-stat-value" id="myTotal">–</div>
+                        <div class="govt-stat-meta" data-i18n="totalIssuesFiled">
+                            <%= __('totalIssuesFiled') %>
+                        </div>
+                    </article>
+
+                    <article class="govt-card govt-stat-card">
+                        <div class="govt-stat-header">
+                            <div class="govt-stat-icon-wrapper" style="color:#a12a2a; background:#f9ebeb">
+                                <span class="govt-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg></span>
+                            </div>
+                            <h3 class="govt-stat-title" data-i18n="pending">
+                                <%= __('pending') %>
+                            </h3>
+                        </div>
+                        <div class="govt-stat-value" id="myPending">–</div>
+                        <div class="govt-stat-meta" data-i18n="awaitingReview">
+                            <%= __('awaitingReview') %>
+                        </div>
+                    </article>
+
+                    <article class="govt-card govt-stat-card">
+                        <div class="govt-stat-header">
+                            <div class="govt-stat-icon-wrapper" style="color:#9a6700; background:#fdf4db">
+                                <span class="govt-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                    </svg></span>
+                            </div>
+                            <h3 class="govt-stat-title" data-i18n="inProgress">
+                                <%= __('inProgress') %>
+                            </h3>
+                        </div>
+                        <div class="govt-stat-value" id="myProgress">–</div>
+                        <div class="govt-stat-meta" data-i18n="workInProgress">
+                            <%= __('workInProgress') %>
+                        </div>
+                    </article>
+
+                    <article class="govt-card govt-stat-card">
+                        <div class="govt-stat-header">
+                            <div class="govt-stat-icon-wrapper" style="color:#2f6b3b; background:#eaf2ec">
+                                <span class="govt-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5 13l4 4L19 7" />
+                                    </svg></span>
+                            </div>
+                            <h3 class="govt-stat-title" data-i18n="resolved">
+                                <%= __('resolved') %>
+                            </h3>
+                        </div>
+                        <div class="govt-stat-value" id="myResolved">–</div>
+                        <div class="govt-stat-meta" data-i18n="successfullyClosed">
+                            <%= __('successfullyClosed') %>
+                        </div>
+                    </article>
+
+                    <article class="govt-card govt-stat-card">
+                        <div class="govt-stat-header">
+                            <div class="govt-stat-icon-wrapper" style="color:#2b6cb0; background:#ebf4ff">
+                                <span class="govt-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                    </svg></span>
+                            </div>
+                            <h3 class="govt-stat-title" data-i18n="points">
+                                <%= __('points') %>
+                            </h3>
+                        </div>
+                        <div class="govt-stat-value" id="myPoints">–</div>
+                        <div class="govt-stat-meta" data-i18n="yourCivicScore">
+                            <%= __('yourCivicScore') %>
+                        </div>
+                    </article>
+                </section>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-column dashboard-column--left">
+                        <div class="govt-card" style="margin-bottom:1.5rem">
+                            <div class="govt-card-header">
+                                <div>
+                                    <h2 class="govt-card-title" data-i18n="recentReports"><%- __('recentReports') %>
+                                    </h2>
+                                    <p class="govt-card-subtitle" data-i18n="reportsSubtitle">
+                                        <%= __('reportsSubtitle') %>
+                                    </p>
+                                </div>
+                                <a href="/my-complaints" class="btn btn-outline btn-sm" data-i18n="viewAll">
+                                    <%= __('viewAll') %>
+                                </a>
+                            </div>
+                            <div id="recentComplaints" class="recent-list">
+                                <div class="govt-empty-state">
+                                    <span class="govt-empty-icon"><svg fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                        </svg></span>
+                                    <h3 class="govt-empty-title" data-i18n="noReportsYet">
+                                        <%= __('noReportsYet') %>
+                                    </h3>
+                                    <p class="govt-empty-desc" data-i18n="recentReportsEmptyCopy">
+                                        <%= __('recentReportsEmptyCopy') %>
+                                    </p>
+                                    <a href="/report" class="btn btn-primary" style="margin-top:0.5rem;"
+                                        data-i18n="reportAnIssue">
+                                        <%= __('reportAnIssue') %>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="govt-card">
+                            <div class="govt-card-header">
+                                <div>
+                                    <h2 class="govt-card-title" data-i18n="activityGraph">
+                                        <%= __('activityGraph') %>
+                                    </h2>
+                                    <p class="govt-card-subtitle" data-i18n="monthlyReportsTrend">
+                                        <%= __('monthlyReportsTrend') %>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="activity-graph">
+                                <div class="graph-legend">
+                                    <span class="legend-pill legend-pill--line" data-i18n="numberLabel">
+                                        <%= __('numberLabel') %>
+                                    </span>
+                                    <span class="legend-pill legend-pill--dot" data-i18n="complaintsLabel">
+                                        <%= __('complaintsLabel') %>
+                                    </span>
+                                </div>
+                                <div class="graph-canvas">
+                                    <div class="graph-line"></div>
+                                    <div class="graph-series">
+                                        <span style="bottom:18%"></span>
+                                        <span style="bottom:27%"></span>
+                                        <span style="bottom:38%"></span>
+                                        <span style="bottom:33%"></span>
+                                        <span style="bottom:51%"></span>
+                                        <span style="bottom:45%"></span>
+                                        <span style="bottom:55%"></span>
+                                        <span style="bottom:62%"></span>
+                                    </div>
+                                </div>
+                                <div class="graph-labels">
+                                    <span data-i18n="monthJan">
+                                        <%= __('monthJan') %>
+                                    </span><span data-i18n="monthFeb">
+                                        <%= __('monthFeb') %>
+                                    </span><span data-i18n="monthMar">
+                                        <%= __('monthMar') %>
+                                    </span><span data-i18n="monthApr">
+                                        <%= __('monthApr') %>
+                                    </span><span data-i18n="monthMay">
+                                        <%= __('monthMay') %>
+                                    </span><span data-i18n="monthJun">
+                                        <%= __('monthJun') %>
+                                    </span><span data-i18n="monthJul">
+                                        <%= __('monthJul') %>
+                                    </span><span data-i18n="monthAug">
+                                        <%= __('monthAug') %>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <div class="dashboard-column dashboard-column--right">
+                        <div class="govt-card mini-map-card">
+                            <div class="govt-card-header">
+                                <h2 class="govt-card-title" data-i18n="miniMapPreview">
+                                    <%= __('miniMapPreview') %>
+                                </h2>
+                            </div>
+                            <div class="nearby-list">
+                                <article class="nearby-item govt-list-item">
+                                    <div class="nearby-icon govt-list-icon"><svg style="width:20px;height:20px"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg></div>
+                                    <div class="govt-list-content">
+                                        <h3 data-i18n="mockPotholeTitle">
+                                            <%= __('mockPotholeTitle') %>
+                                        </h3>
+                                        <p><span class="nearby-tag" data-i18n="mockPotholeTag">
+                                                <%= __('mockPotholeTag') %>
+                                            </span> · <span data-i18n="mockPotholeDist">
+                                                <%= __('mockPotholeDist') %>
+                                            </span></p>
+                                    </div>
+                                </article>
+                                <article class="nearby-item govt-list-item">
+                                    <div class="nearby-icon govt-list-icon"><svg style="width:20px;height:20px"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg></div>
+                                    <div class="govt-list-content">
+                                        <h3 data-i18n="mockWaterLeakTitle">
+                                            <%= __('mockWaterLeakTitle') %>
+                                        </h3>
+                                        <p><span class="nearby-tag" data-i18n="mockWaterLeakTag">
+                                                <%= __('mockWaterLeakTag') %>
+                                            </span> · <span data-i18n="mockWaterLeakDist">
+                                                <%= __('mockWaterLeakDist') %>
+                                            </span></p>
+                                    </div>
+                                </article>
+                                <article class="nearby-item govt-list-item">
+                                    <div class="nearby-icon govt-list-icon"><svg style="width:20px;height:20px"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg></div>
+                                    <div class="govt-list-content">
+                                        <h3 data-i18n="mockRoadDamageTitle">
+                                            <%= __('mockRoadDamageTitle') %>
+                                        </h3>
+                                        <p><span class="nearby-tag" data-i18n="mockRoadDamageTag">
+                                                <%= __('mockRoadDamageTag') %>
+                                            </span> · <span data-i18n="mockRoadDamageDist">
+                                                <%= __('mockRoadDamageDist') %>
+                                            </span></p>
+                                    </div>
+                                </article>
+                            </div>
+                        </div>
+
+                        <div class="govt-card gamification-card civic-progress-card" style="margin-top:1.5rem">
+                            <div class="govt-card-header">
+                                <h2 class="govt-card-title" data-i18n="communityProgressReport">
+                                    <%= __('communityProgressReport') %>
+                                </h2>
+                            </div>
+                            <div class="badge-pill" style="font-weight:600; color:#b48a3c; margin-bottom:1rem"
+                                data-i18n="silverCivicChampion">
+                                <%= __('silverCivicChampion') %>
+                            </div>
+                            <div class="points-panel mt-2">
+                                <span class="points-value govt-stat-value" id="myPointsBadge"
+                                    style="margin-right:0.5rem; font-size:2rem">–</span>
+                                <span class="points-label govt-stat-meta" data-i18n="ptsLabel">
+                                    <%= __('ptsLabel') %>
+                                </span>
+                            </div>
+                            <div class="progress-block mt-4">
+                                <div class="progress-info"
+                                    style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.4rem; color:var(--text-muted)">
+                                    <span data-i18n="nextLevel">
+                                        <%= __('nextLevel') %>
+                                    </span><strong data-i18n="nextLevelTarget">
+                                        <%= __('nextLevelTarget') %>
+                                    </strong>
+                                </div>
+                                <div class="progress-bar"
+                                    style="background:var(--border-light); height:8px; border-radius:4px">
+                                    <div class="progress-fill"
+                                        style="width: 42%; background:var(--accent); height:100%; border-radius:4px">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="govt-card quick-actions-card" style="margin-top:1.5rem">
+                            <div class="govt-card-header">
+                                <h2 class="govt-card-title" data-i18n="quickActions">
+                                    <%= __('quickActions') %>
+                                </h2>
+                            </div>
+                            <div class="govt-action-list">
+                                <a href="/report" class="btn btn-primary btn-block" data-i18n="reportIssue">
+                                    <%= __('reportIssue') %>
+                                </a>
+                                <a href="/my-complaints" class="btn btn-outline btn-block" data-i18n="trackComplaint">
+                                    <%= __('trackComplaint') %>
+                                </a>
+                                <a href="/map" class="btn btn-outline btn-block"
+                                    style="background:#fff !important; color:var(--text)!important" data-i18n="viewMap">
+                                    <%= __('viewMap') %>
+                                </a>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+                <%- include('partials/pwa-install') %>
+                    <%- include('partials/scripts') %>
+                        <script>
+                            if (!window.NIRVAAH?.Auth.isLoggedIn()) {
+                                window.location.href = '/login';
+                            } else if (window.NIRVAAH.Auth.isAdmin()) {
+                                window.location.href = '/admin/dashboard';
+                            }
+
+                            // Greeting
+                            const hr = new Date().getHours();
+                            document.getElementById('greeting').textContent = hr < 12 ? `<%= __('morning') %>` : hr < 17 ? `<%= __('afternoon') %>` : `<%= __('evening') %>`;
+
+                            const user = window.NIRVAAH.getUser();
+                            if (user) {
+                                try {
+                                    const points = (user.points || 0).toLocaleString();
+                                    const fallbackName = '<%= __("citizenFallback") %>';
+                                    const firstName = user.name ? user.name.split(' ')[0] : fallbackName;
+                                    const firstLetter = user.name ? user.name[0].toUpperCase() : 'C';
+
+                                    const nameEl = document.getElementById('userName');
+                                    if (nameEl) nameEl.textContent = firstName;
+
+                                    const navAv = document.getElementById('navAvatar');
+                                    if (navAv) navAv.textContent = firstLetter;
+
+                                    const heroAv = document.getElementById('heroAvatar');
+                                    if (heroAv) heroAv.textContent = firstLetter;
+
+                                    const lastAct = document.getElementById('heroLastActive');
+                                    if (lastAct) {
+                                        lastAct.textContent = user.lastActive ? new Date(user.lastActive).toLocaleDateString() : '<%= __("today") %>';
+                                    }
+
+                                    const myPts = document.getElementById('myPoints');
+                                    if (myPts) myPts.textContent = points;
+
+                                    const myPtsB = document.getElementById('myPointsBadge');
+                                    if (myPtsB) myPtsB.textContent = points;
+
+                                    const heroPts = document.getElementById('heroPoints');
+                                    if (heroPts) heroPts.textContent = points;
+                                } catch (err) {
+                                    console.error('Error updating user UI:', err);
+                                }
+                            }
+
+                            async function loadDashboard() {
+                                try {
+                                    const [myData] = await Promise.all([
+                                        window.NIRVAAH.Complaints.getMy({ limit: 6 })
+                                    ]);
+                                    const complaints = myData.complaints || [];
+                                    const counts = { pending: 0, in_progress: 0, resolved: 0 };
+                                    complaints.forEach(c => { counts[c.status] = (counts[c.status] || 0) + 1; });
+
+                                    document.getElementById('myTotal').textContent = myData.pagination?.total || complaints.length;
+                                    document.getElementById('myPending').textContent = counts.pending;
+                                    document.getElementById('myProgress').textContent = counts.in_progress;
+                                    document.getElementById('myResolved').textContent = counts.resolved;
+
+                                    const grid = document.getElementById('recentComplaints');
+                                    if (!complaints.length) {
+                                        grid.innerHTML = `<div class="govt-empty-state"><span class="govt-empty-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></span><h3 class="govt-empty-title" data-i18n="noReportsYet"><%= __('noReportsYet') %></h3><p class="govt-empty-desc" data-i18n="recentReportsEmptyCopy"><%= __('recentReportsEmptyCopy') %></p><a href="/report" class="btn btn-primary" style="margin-top:0.5rem;" data-i18n="reportAnIssue"><%= __('reportAnIssue') %></a></div>`;
+                                    } else {
+                                        const statusLabel = {
+                                            pending: '<%= __("pending") %>',
+                                            in_progress: '<%= __("inProgress") %>',
+                                            resolved: '<%= __("resolved") %>'
+                                        };
+                                        grid.innerHTML = complaints.map(c => `
+        <div class="complaint-card" onclick="location.href='/complaint?id=${c._id}'" style="border-radius:12px; margin-bottom:1rem; cursor:pointer; transition: transform 0.2s">
+          ${c.images?.length ? `<img class="complaint-card-img" src="${c.images[0].url}" alt="${c.title}" loading="lazy">` : `<div class="complaint-card-img-placeholder" style="background:#f7efdf; color:var(--primary)"><svg style="width:24px;height:24px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>`}
+          <div class="complaint-meta"><span class="badge badge-${c.status}">${statusLabel[c.status] || c.status}</span><span class="badge badge-${c.priority}">${c.priority}</span></div>
+          <div class="complaint-title" style="font-weight:600; color:var(--primary-dark)">${c.title}</div>
+          <div class="complaint-desc">${c.description}</div>
+          <div class="complaint-footer" style="padding-top:0.75rem; border-top:1px solid var(--border-light)"><span class="text-sm text-muted">${new Date(c.createdAt).toLocaleDateString()}</span><span class="vote-btn" style="color:var(--text-muted)"><svg style="width:14px;display:inline;vertical-align:bottom;margin-right:2px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg> ${c.voteCount || 0}</span></div>
+        </div>`).join('');
+                                    }
+
+
+                                    // Notifications dot
+                                    const nd = await window.NIRVAAH.Notifications.getAll().catch(() => null);
+                                    if (nd?.unreadCount > 0) document.getElementById('notifDot')?.classList.remove('hidden');
+                                } catch (err) {
+                                    showToast('Error', 'Could not load dashboard data.', 'error');
+                                }
+                            }
+
+                            loadDashboard();
+                        </script>
+                        </body>
+
+                        </html>
