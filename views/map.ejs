@@ -1,0 +1,171 @@
+<%- include('partials/head') %>
+  <%- include('partials/navbar', {navPage}) %>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <div class="page-wrapper">
+      <div class="container" style="padding-top:2rem;padding-bottom:3rem">
+
+        <!-- PAGE HEADER -->
+        <div class="breadcrumb mb-2">
+          <a href="/">Home</a>
+          <span>›</span>
+          <span data-i18n="liveIssueMap"><%- __('liveIssueMap') %></span>
+        </div>
+
+        <div
+          style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem">
+          <div>
+            <h1 class="section-title" style="font-size:1.75rem;padding-bottom:.5rem" data-i18n="liveIssueMap"><%-
+                __('liveIssueMap') %></h1>
+            <p class="text-muted" data-i18n="allReportedIssues">
+              <%= __('allReportedIssues') %>
+            </p>
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+            <!-- Status Legend -->
+            <div
+              style="display:flex;gap:.75rem;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.5rem .85rem">
+              <span
+                style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:600;color:var(--text-muted)">
+                <span
+                  style="width:10px;height:10px;border-radius:50%;background:var(--pending);display:inline-block"></span>
+                <%= __('pending') %>
+              </span>
+              <span
+                style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:600;color:var(--text-muted)">
+                <span
+                  style="width:10px;height:10px;border-radius:50%;background:var(--in-progress);display:inline-block"></span>
+                <%= __('inProgress') %>
+              </span>
+              <span
+                style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:600;color:var(--text-muted)">
+                <span
+                  style="width:10px;height:10px;border-radius:50%;background:var(--resolved);display:inline-block"></span>
+                <%= __('resolved') %>
+              </span>
+            </div>
+            <!-- Category Filter -->
+            <select id="mapFilter" class="form-control" onchange="applyFilter()" style="width:auto;font-size:.85rem">
+              <option value="">
+                <%= __('allCategories') %>
+              </option>
+              <%
+                [['pothole',__('catPothole')],['garbage',__('catGarbage')],['water_leakage',__('catWaterLeak')],['electricity',__('catElectricity')],['road_damage',__('catRoadDamage')],['street_light',__('catStreetLight')],['sewage',__('catSewage')],['other',__('catOther')]].forEach(([v,l])=>
+                { %>
+                <option value="<%= v %>">
+                  <%= l %>
+                </option>
+                <% }) %>
+            </select>
+          </div>
+        </div>
+
+        <!-- STATS ROW -->
+        <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:1.25rem">
+          <div class="stat-card" style="text-align:center;padding:1rem">
+            <div class="stat-number primary" id="mapTotal">–</div>
+            <div class="stat-label" data-i18n="total">
+              <%= __('total') %>
+            </div>
+          </div>
+          <div class="stat-card" style="text-align:center;padding:1rem;border-top-color:var(--pending)">
+            <div class="stat-number" style="color:var(--pending)" id="mapPending">–</div>
+            <div class="stat-label" data-i18n="pending">
+              <%= __('pending') %>
+            </div>
+          </div>
+          <div class="stat-card" style="text-align:center;padding:1rem;border-top-color:var(--in-progress)">
+            <div class="stat-number" style="color:var(--in-progress)" id="mapInProgress">–</div>
+            <div class="stat-label" data-i18n="inProgress">
+              <%= __('inProgress') %>
+            </div>
+          </div>
+          <div class="stat-card" style="text-align:center;padding:1rem;border-top-color:var(--resolved)">
+            <div class="stat-number" style="color:var(--resolved)" id="mapResolved">–</div>
+            <div class="stat-label" data-i18n="resolved">
+              <%= __('resolved') %>
+            </div>
+          </div>
+        </div>
+
+        <!-- MAP -->
+        <div id="map" style="height:68vh;min-height:420px;border-radius:var(--radius);border:1px solid var(--border)">
+        </div>
+
+      </div>
+    </div>
+
+    <%- include('partials/scripts') %>
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      <script>
+        const statusColors = { pending: 'var(--pending)', in_progress: 'var(--in-progress)', resolved: 'var(--resolved)' };
+        const statusColorHex = { pending: '#a12a2a', in_progress: '#9a6700', resolved: '#2f6b3b' };
+        const statusLabels = {
+          pending: '<%= __("pending") %>',
+          in_progress: '<%= __("inProgress") %>',
+          resolved: '<%= __("resolved") %>'
+        };
+
+        let map, all = [], markers = [];
+
+        function initMap() {
+          map = L.map('map').setView([20.5937, 78.9629], 5);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 19
+          }).addTo(map);
+        }
+
+        function clearMarkers() { markers.forEach(m => map.removeLayer(m)); markers = []; }
+
+        function renderMarkers(list) {
+          clearMarkers();
+          let p = 0, ip = 0, r = 0;
+          list.forEach(c => {
+            if (!c.location?.coordinates) return;
+            const [lng, lat] = c.location.coordinates;
+            const color = statusColorHex[c.status] || '#7b1e2b';
+            const icon = L.divIcon({
+              className: '',
+              html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>`,
+              iconSize: [14, 14], iconAnchor: [7, 7]
+            });
+            const m = L.marker([lat, lng], { icon }).addTo(map);
+            m.bindPopup(`
+      <div style="min-width:190px;font-family:'Inter',sans-serif">
+        <div style="font-weight:700;font-size:.9rem;margin-bottom:.3rem;color:#1f2937">${c.title}</div>
+        <div style="font-size:.76rem;color:#777;margin-bottom:.4rem">${c.location.address || ''}</div>
+        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:600;background:${color}18;color:${color};border:1px solid ${color}44">${statusLabels[c.status]}</span>
+        <div style="font-size:.74rem;color:#888;margin-top:.4rem">${c.voteCount || 0} <%= __('votesText') %></div>
+        <a href="/issue?id=${c._id}" style="display:block;margin-top:.4rem;font-size:.76rem;color:var(--primary);font-weight:600"><%= __('viewLink') %></a>
+      </div>`, { maxWidth: 240 });
+            markers.push(m);
+            if (c.status === 'pending') p++; else if (c.status === 'in_progress') ip++; else r++;
+          });
+          document.getElementById('mapTotal').textContent = list.length;
+          document.getElementById('mapPending').textContent = p;
+          document.getElementById('mapInProgress').textContent = ip;
+          document.getElementById('mapResolved').textContent = r;
+        }
+
+        function applyFilter() {
+          const cat = document.getElementById('mapFilter').value;
+          renderMarkers(cat ? all.filter(c => c.category === cat) : all);
+        }
+
+        async function loadMap() {
+          try {
+            const data = await window.NIRVAAH.Complaints.getForMap();
+            all = data.complaints || [];
+            renderMarkers(all);
+            const bounds = all.filter(c => c.location?.coordinates).map(c => [c.location.coordinates[1], c.location.coordinates[0]]);
+            if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30] });
+          } catch (e) { console.error(e); }
+        }
+
+        initMap();
+        loadMap();
+      </script>
+      </body>
+
+      </html>

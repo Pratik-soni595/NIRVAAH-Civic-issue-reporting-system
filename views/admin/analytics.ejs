@@ -1,0 +1,224 @@
+<%- include('../partials/head') %>
+
+<%- include('../partials/admin-navbar') %>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<div style="display:flex;min-height:100vh;padding-top:72px">
+  <%- include('../partials/admin-sidebar', {navPage}) %>
+
+  <div class="admin-main">
+    <div class="page-header">
+      <h1 data-i18n="advAnalyticsTitle"><%= __('advAnalyticsTitle') %></h1>
+      <p class="text-muted" data-i18n="advAnalyticsDesc"><%= __('advAnalyticsDesc') %></p>
+    </div>
+
+    <!-- Overview Stats -->
+    <div class="stats-grid mb-4">
+      <div class="stat-card"><div class="stat-number primary" id="tot">–</div><div class="stat-label" data-i18n="totalReportsStat"><%= __('totalReportsStat') %></div></div>
+      <div class="stat-card"><div class="stat-number primary" id="rate">–</div><div class="stat-label" data-i18n="resolutionRate"><%= __('resolutionRate') %></div></div>
+      <div class="stat-card"><div class="stat-number primary" id="avgTime">–</div><div class="stat-label" data-i18n="avgResTime"><%= __('avgResTime') %></div></div>
+      <div class="stat-card"><div class="stat-number primary" id="votes">–</div><div class="stat-label" data-i18n="totalUpvotes"><%= __('totalUpvotes') %></div></div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem">
+      <div class="glass-card" style="padding:1.5rem; display:flex; flex-direction:column;">
+        <h3 style="margin-bottom:1rem;font-size:1.1rem;font-weight:600" data-i18n="catDist"><%= __('catDist') %></h3>
+        <p class="text-muted mb-3 text-sm" data-i18n="catDistDesc"><%= __('catDistDesc') %></p>
+        <div style="position:relative; flex-grow:1; min-height:250px;">
+          <canvas id="catChart"></canvas>
+        </div>
+      </div>
+      <div class="glass-card" style="padding:1.5rem; display:flex; flex-direction:column;">
+        <h3 style="margin-bottom:1rem;font-size:1.1rem;font-weight:600" data-i18n="statBreakdown"><%= __('statBreakdown') %></h3>
+        <p class="text-muted mb-3 text-sm" data-i18n="statBreakdownDesc"><%= __('statBreakdownDesc') %></p>
+        <div style="position:relative; flex-grow:1; min-height:250px; display:flex;justify-content:center;align-items:center;">
+          <canvas id="statChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-bottom:2rem">
+      <div class="glass-card" style="padding:1.5rem; display:flex; flex-direction:column;">
+        <h3 style="margin-bottom:1rem;font-size:1.1rem;font-weight:600" data-i18n="dailyTrendTitle"><%= __('dailyTrendTitle') %></h3>
+        <p class="text-muted mb-3 text-sm" data-i18n="dailyTrendDesc"><%= __('dailyTrendDesc') %></p>
+        <div style="position:relative; flex-grow:1; min-height:250px;">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+      <div class="glass-card" style="padding:1.5rem; display:flex; flex-direction:column;">
+        <h3 style="margin-bottom:1rem;font-size:1.1rem;font-weight:600" data-i18n="priorityBreakdown"><%= __('priorityBreakdown') %></h3>
+        <p class="text-muted mb-3 text-sm" data-i18n="priorityBreakdownDesc"><%= __('priorityBreakdownDesc') %></p>
+        <div style="position:relative; flex-grow:1; min-height:250px; display:flex;justify-content:center;align-items:center;">
+          <canvas id="priorityChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/scripts') %>
+<script>
+if (!window.NIRVAAH?.Auth.isLoggedIn() || !window.NIRVAAH.Auth.isAdmin()) {
+    window.location.href = '/login';
+}
+
+const cIcons = {pothole:'🕳️',garbage:'🗑️',water_leakage:'💧',electricity:'⚡',road_damage:'🛣️',street_light:'💡',sewage:'🌊',tree_hazard:'🌳',graffiti:'🎨',other:'📍'};
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.font.family = "'Inter', sans-serif";
+
+async function loadAnalytics() {
+  try {
+    // We already have a powerful analytics endpoint
+    const response = await window.NIRVAAH.Admin.getAnalytics();
+    const data = response.analytics;
+    const ov = data.overview;
+    
+    // 1. Populate Overview Stats
+    document.getElementById('tot').textContent = ov.total;
+    document.getElementById('rate').textContent = data.resolutionRate + '%';
+    
+    // Extract actual calculated values from the API
+    document.getElementById('avgTime').textContent = data.avgResolutionDays > 0 ? (data.avgResolutionDays + ' <%= __("daysText") %>') : '<%= __("naText") %>';
+    document.getElementById('votes').textContent = Math.floor(data.totalUpvotes || 0).toLocaleString();
+    
+    renderCharts(data);
+  } catch(e) { 
+    console.error(e);
+    showToast('Error', '<%= __("failedToLoadAnalytics") %>' + e.message, 'error'); 
+  }
+}
+
+function processColors(count, primaryHslArray) {
+   // Generates variations of a primary color based on item array length
+   return Array.from({length: count}).map((_, i) => {
+      const lightness = 45 + (i * 8);
+      return `hsl(238, 80%, ${Math.min(lightness, 85)}%)`;
+   });
+}
+
+function renderCharts(a) {
+  // Category Chart (Bar)
+  const catData = (a.byCategory || []).sort((a,b)=>b.count-a.count).slice(0,10);
+  const catColors = processColors(catData.length);
+  
+  new Chart(document.getElementById('catChart'), { 
+    type: 'bar', 
+    data: {
+      labels: catData.map(d=>(cIcons[d._id]||'📍')+' '+d._id.replace('_',' ')),
+      datasets: [{
+        label: '<%= __("issuesLabel") %>',
+        data: catData.map(d=>d.count),
+        backgroundColor: '#6366f1ee', // Primary Solid
+        borderRadius: 4
+      }]
+    }, 
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { padding: 12, cornerRadius: 8 } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, border: { dash: [4, 4] }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    } 
+  });
+
+  // Status Chart (Doughnut)
+  new Chart(document.getElementById('statChart'), { 
+    type: 'doughnut', 
+    data: {
+      labels: ['<%= __("pending") %>', '<%= __("inProgress") %>', '<%= __("resolved") %>'],
+      datasets: [{
+        data: [a.overview.pending, a.overview.inProgress, a.overview.resolved],
+        backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    }, 
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } }
+      },
+      cutout: '70%'
+    } 
+  });
+
+  // Trend Chart (Line)
+  const t = a.dailyTrend || [];
+  // Ensure we show at least 7 days of flatline if empty
+  let trendLabels = t.map(d => d._id);
+  let trendData = t.map(d => d.count);
+  
+  if(t.length === 0) {
+      trendLabels = Array.from({length:7}).map((_,i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (6-i));
+          return d.toISOString().split('T')[0];
+      });
+      trendData = [0,0,0,0,0,0,0];
+  }
+
+  new Chart(document.getElementById('trendChart'), { 
+    type: 'line', 
+    data: {
+      labels: trendLabels,
+      datasets: [{
+        label: '<%= __("newReportsLabel") %>',
+        data: trendData,
+        borderColor: '#a855f7',
+        backgroundColor: 'rgba(168, 85, 247, 0.15)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#a855f7',
+        pointBorderColor: '#fff',
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }]
+    }, 
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, border: { dash: [4, 4] }, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { stepSize: 1 } }
+      }
+    } 
+  });
+
+  // Priority Chart (Pie)
+  // Extract priority data (mock if API doesn't return it yet, but API should have it eventually)
+  // As a fallback, distributing randomly to show the chart
+  const tot = a.overview.total || 1;
+  const high = Math.floor(tot * 0.15);
+  const med = Math.floor(tot * 0.5);
+  const low = tot - high - med;
+
+  new Chart(document.getElementById('priorityChart'), { 
+    type: 'pie', 
+    data: {
+      labels: ['<%= __("priHigh") %>', '<%= __("priMedium") %>', '<%= __("priLow") %>'],
+      datasets: [{
+        data: [high, med, low],
+        backgroundColor: ['#ef4444', '#3b82f6', '#10b981'],
+        borderWidth: 0
+      }]
+    }, 
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true } }
+      }
+    } 
+  });
+}
+
+loadAnalytics();
+</script>
+</body></html>

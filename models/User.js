@@ -26,11 +26,7 @@ const userSchema = new mongoose.Schema({
     minlength: [6, 'Password must be at least 6 characters'],
     select: false // Don't return password in queries by default
   },
-  role: {
-    type: String,
-    enum: ['citizen', 'admin'],
-    default: 'citizen'
-  },
+
   avatar: {
     type: String,
     default: '' // Cloudinary URL or empty
@@ -96,7 +92,7 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 userSchema.methods.generateJWT = function () {
   const jwt = require('jsonwebtoken');
   return jwt.sign(
-    { id: this._id, role: this.role },
+    { id: this._id, accountType: 'citizen' },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRE || '7d' }
   );

@@ -1,0 +1,179 @@
+<%- include('partials/head') %>
+  <%- include('partials/navbar', {navPage}) %>
+
+    <div class="page-wrapper">
+      <div class="container" style="padding-top:2rem;padding-bottom:3rem">
+
+        <!-- PAGE HEADER -->
+        <div class="breadcrumb mb-2">
+          <a href="/dashboard" data-i18n="dashboard">
+            <%= __('dashboard') %>
+          </a>
+
+        </div>
+
+        <div
+          style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.75rem">
+          <div>
+            <h1 class="section-title" style="font-size:1.75rem;padding-bottom:.5rem">My Reports</h1>
+            <p class="text-muted" id="rCount" data-i18n="loading">
+              <%= __('loading') %>
+            </p>
+          </div>
+          <a href="/report" class="btn btn-primary" data-i18n="newReport">
+            <%= __('newReport') %>
+          </a>
+        </div>
+
+        <!-- OFFLINE SYNC BANNER -->
+        <div id="offlineBanner2" class="hidden"
+          style="background:#fff4dc;border:1px solid #e2c889;border-left:4px solid var(--accent);border-radius:var(--radius-sm);padding:.85rem 1.25rem;margin-bottom:1.5rem;font-size:.87rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+          <span><strong id="offlineCount">0</strong>
+            <%= __('offlineWaiting') %>
+          </span>
+          <button onclick="manualSync()" class="btn btn-primary btn-sm" data-i18n="syncNow">
+            <%= __('syncNow') %>
+          </button>
+        </div>
+
+        <!-- FILTER BAR -->
+        <div
+          style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.85rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+          <label
+            style="font-size:.82rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap"
+            for="statusFilter">
+            <%= __('filterByStatus') || 'Filter by Status' %>:
+          </label>
+          <select id="statusFilter" onchange="load()" class="form-control" style="max-width:220px;font-size:.88rem">
+            <option value="" data-i18n="allStatuses">
+              <%= __('allStatuses') %>
+            </option>
+            <option value="pending">
+              <%= __('pending') %>
+            </option>
+            <option value="in_progress">In Progress</option>
+            <option value="resolved">
+              <%= __('resolved') %>
+            </option>
+          </select>
+        </div>
+
+        <!-- COMPLAINTS GRID -->
+        <div class="complaints-grid" id="grid">
+          <div class="loading-center" style="grid-column:1/-1">
+            <div class="spinner"></div>
+          </div>
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="pagination" id="pages"></div>
+
+      </div>
+    </div>
+
+    <%- include('partials/scripts') %>
+      <script>
+        if (!window.NIRVAAH?.Auth.isLoggedIn()) {
+          window.location.href = '/login';
+        } else if (window.NIRVAAH.Auth.isAdmin()) {
+          window.location.href = '/admin/dashboard';
+        }
+
+        let page = 1;
+
+        function getSLabel(status) {
+          const enLabels = { pending: 'Pending', in_progress: 'In Progress', resolved: 'Resolved' };
+          let text = enLabels[status] || status;
+          if (window.i18nDict && window.i18nDict[status]) text = window.i18nDict[status];
+          return text;
+        }
+
+        async function load() {
+          const status = document.getElementById('statusFilter').value;
+          document.getElementById('grid').innerHTML = `<div class="loading-center" style="grid-column:1/-1"><div class="spinner"></div></div>`;
+          try {
+            const data = await window.NIRVAAH.Complaints.getMy({ status, page, limit: 9 });
+            const list = data.complaints || [];
+            document.getElementById('rCount').textContent = `${data.pagination?.total || 0} <%= __('reportsFound') %>`;
+
+            if (!list.length) {
+              document.getElementById('grid').innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:4rem 2rem">
+          <div class="empty-icon" style="font-size:2.5rem;opacity:.4;margin-bottom:1rem">—</div>
+          <div class="empty-title" data-i18n="noReportsYet"><%= __('noReportsYet') %></div>
+          <p class="text-muted" style="margin:.5rem 0 1.5rem;font-size:.9rem">Start contributing to better governance by reporting civic issues.</p>
+          <a href="/report" class="btn btn-primary" data-i18n="reportAnIssue"><%= __('reportAnIssue') %></a>
+        </div>`;
+              return;
+            }
+
+            document.getElementById('grid').innerHTML = list.map(c => `
+      <div class="complaint-card" onclick="location.href='/complaint?id=${c._id}'" style="cursor:pointer;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;bottom:0;width:3px;background:${c.status === 'resolved' ? 'var(--resolved)' : c.status === 'in_progress' ? 'var(--in-progress)' : 'var(--pending)'}"></div>
+        ${c.images?.length
+                ? `<img class="complaint-card-img" src="${c.images[0].url}" alt="${c.title}" loading="lazy">`
+                : `<div class="complaint-card-img-placeholder"></div>`}
+        <div class="complaint-meta">
+          <span class="badge badge-${c.status}">${getSLabel(c.status)}</span>
+          <span class="badge badge-${c.priority}" style="text-transform:capitalize">${c.priority}</span>
+          <span class="badge" style="text-transform:capitalize">${c.category.replace('_', ' ')}</span>
+        </div>
+        <div class="complaint-title">${c.title}</div>
+        <div class="complaint-desc">${c.description}</div>
+        <div style="height:1px;background:var(--border-light);margin:1rem 0"></div>
+        <div class="complaint-footer">
+          <span class="text-sm text-muted">${new Date(c.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <span style="font-size:.78rem;color:var(--text-muted)">${c.voteCount || 0} votes</span>
+            <button onclick="event.stopPropagation();del('${c._id}')" class="btn btn-danger btn-sm btn-icon" title="Delete" style="width:30px;height:30px;font-size:.75rem">X</button>
+          </div>
+        </div>
+      </div>`).join('');
+            renderPagination(data.pagination);
+          } catch (err) { showToast('Error', err.message, 'error'); }
+        }
+
+        function renderPagination(pg) {
+          if (!pg || pg.pages <= 1) { document.getElementById('pages').innerHTML = ''; return; }
+          let h = '';
+          if (pg.page > 1) h += `<div class="page-btn" onclick="changePage(${pg.page - 1})">&#8249;</div>`;
+          for (let i = 1; i <= pg.pages; i++) h += `<div class="page-btn ${i === pg.page ? 'active' : ''}" onclick="changePage(${i})">${i}</div>`;
+          if (pg.page < pg.pages) h += `<div class="page-btn" onclick="changePage(${pg.page + 1})">&#8250;</div>`;
+          document.getElementById('pages').innerHTML = h;
+        }
+
+        function changePage(n) { page = n; load(); scrollTo(0, 0); }
+
+        async function del(id) {
+          if (!confirm(`<%= __('deleteConfirm') %>`)) return;
+          try {
+            await window.NIRVAAH.Complaints.delete(id);
+            const meRes = await window.NIRVAAH.Auth.getMe();
+            if (meRes.user) window.NIRVAAH.setUser(meRes.user);
+            showToast(`<%= __('deleted') %>`, `<%= __('removed') %>`, 'success');
+            load();
+          } catch (e) { showToast('Error', e.message, 'error'); }
+        }
+
+        async function manualSync() {
+          if (!navigator.onLine) { showToast(`<%= __('offline') %>`, `<%= __('stillNoConnection') %>`, 'warning'); return; }
+          const r = await window.NirvaahDB.syncPendingComplaints();
+          showToast(`<%= __('synced') %>`, `${r.synced} <%= __('uploaded') %>`, 'success');
+          document.getElementById('offlineBanner2').classList.add('hidden');
+          load();
+        }
+
+        async function checkQueue() {
+          const c = await window.NirvaahDB?.countPending?.() ?? 0;
+          if (c > 0) {
+            document.getElementById('offlineCount').textContent = c;
+            document.getElementById('offlineBanner2').classList.remove('hidden');
+          }
+        }
+
+        load();
+        checkQueue();
+      </script>
+      </body>
+
+      </html>

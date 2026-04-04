@@ -5,6 +5,7 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const Admin = require('../models/Admin');
 const Complaint = require('../models/Complaint');
 
 const connectDB = require('./db');
@@ -14,25 +15,25 @@ const seed = async () => {
   console.log('🌱 Seeding database...');
 
   // Clear existing data
+  await Admin.deleteMany({});
   await User.deleteMany({});
   await Complaint.deleteMany({});
   console.log('✅ Cleared existing data');
 
   // Create admin user
-  const admin = await User.create({
+  const admin = await Admin.create({
     name: 'NIRVAAH Admin',
     email: 'admin@nirvaah.com',
     password: 'admin123',
-    role: 'admin',
-    points: 0
+    isActive: true
   });
   console.log('✅ Admin created:', admin.email);
 
   // Create citizen users
   const citizens = await User.create([
-    { name: 'Rahul Kumar', email: 'citizen@nirvaah.com', password: 'pass123', role: 'citizen', points: 120, complaintsCount: 4, resolvedCount: 2 },
-    { name: 'Priya Sharma', email: 'priya@nirvaah.com', password: 'pass123', role: 'citizen', points: 85, complaintsCount: 3, resolvedCount: 1 },
-    { name: 'Amit Singh', email: 'amit@nirvaah.com', password: 'pass123', role: 'citizen', points: 60, complaintsCount: 2, resolvedCount: 1 }
+    { name: 'Rahul Kumar', email: 'citizen@nirvaah.com', password: 'pass123', points: 120, complaintsCount: 4, resolvedCount: 2 },
+    { name: 'Priya Sharma', email: 'priya@nirvaah.com', password: 'pass123', points: 85, complaintsCount: 3, resolvedCount: 1 },
+    { name: 'Amit Singh', email: 'amit@nirvaah.com', password: 'pass123', points: 60, complaintsCount: 2, resolvedCount: 1 }
   ]);
   console.log(`✅ ${citizens.length} citizens created`);
 
@@ -89,7 +90,7 @@ const seed = async () => {
   for (const comp of sampleComplaints) {
     await Complaint.create({
       ...comp,
-      statusHistory: [{ status: comp.status, changedBy: admin._id, note: 'Status set during seeding' }]
+      statusHistory: [{ status: comp.status, changedByModel: 'Admin', changedBy: admin._id, note: 'Status set during seeding' }]
     });
   }
   console.log(`✅ ${sampleComplaints.length} sample complaints created`);
