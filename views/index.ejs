@@ -1,0 +1,801 @@
+<%- include('partials/head') %>
+    <%- include('partials/navbar') %>
+
+        <!-- ═══════════════════════════════════════════════════════
+     HERO SECTION
+════════════════════════════════════════════════════════ -->
+        <main class="hero-section" id="main-content">
+            <div class="container">
+                <div class="hero-content">
+
+                    <!-- Official badge -->
+                    <div class="hero-badge" data-i18n="heroBadge">
+                        Official Civic Platform
+                    </div>
+
+                    <!-- Main heading -->
+                    <h1 class="hero-title" data-i18n="heroTitle">
+                        Empowering Citizens for<br>Better Governance
+                    </h1>
+
+                    <!-- Subtext -->
+                    <p class="hero-subtitle" data-i18n="heroSubtitle">
+                        Report public infrastructure issues &mdash; roads, water, electricity, sanitation &mdash;
+                        and track real-time resolution status.
+                    </p>
+
+                    <!-- CTA Buttons -->
+                    <div class="hero-actions">
+                        <a href="/report" class="btn-hero-primary" id="heroReportBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" style="flex-shrink:0">
+                                <path d="M12 5v14M5 12l7-7 7 7" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Report Issue
+                        </a>
+                        <a href="/my-complaints" class="btn-hero-secondary" id="heroTrackBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" style="flex-shrink:0">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                            Track Complaint
+                        </a>
+                    </div>
+
+                </div><!-- /.hero-content -->
+            </div><!-- /.container -->
+        </main>
+
+        <!-- ═══════════════════════════════════════════════════════
+     STATS STRIP  
+════════════════════════════════════════════════════════ -->
+        <section class="stats-strip" id="statsStrip">
+            <div class="stats-strip-inner">
+
+                <div class="stat-strip-item">
+                    <div class="stat-strip-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                        </svg>
+                    </div>
+                    <div class="stat-strip-num counter" data-target="12480">0</div>
+                    <div class="stat-strip-label">Total Issues Reported</div>
+                </div>
+
+                <div class="stat-strip-item">
+                    <div class="stat-strip-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                    </div>
+                    <div class="stat-strip-num counter" data-target="9320">0</div>
+                    <div class="stat-strip-label">Issues Resolved</div>
+                </div>
+
+                <div class="stat-strip-item">
+                    <div class="stat-strip-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                    </div>
+                    <div class="stat-strip-num accent counter" data-target="2118">0</div>
+                    <div class="stat-strip-label">In Progress</div>
+                </div>
+
+                <div class="stat-strip-item">
+                    <div class="stat-strip-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                    </div>
+                    <div class="stat-strip-num accent counter" data-target="45200">0</div>
+                    <div class="stat-strip-label">Active Citizens</div>
+                </div>
+
+            </div>
+        </section>
+
+        <style>
+            .impact-slider-section {
+                padding: 4.5rem 0 2rem 0;
+                background: #FFFFFF;
+                text-align: center;
+            }
+
+            .impact-slider-section .section-title {
+                font-size: 2.5rem;
+                font-weight: 800;
+                color: #1a1a1a;
+                margin-bottom: 0.5rem;
+            }
+
+            .impact-slider-section .section-subtitle {
+                font-size: 1.1rem;
+                color: var(--text-muted);
+                margin-bottom: 2.5rem;
+            }
+
+            .slider-wrapper {
+                position: relative;
+                width: 100%;
+                max-width: 800px;
+                margin: 0 auto;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                aspect-ratio: 16 / 9;
+            }
+
+            .slider-img {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                pointer-events: none;
+            }
+
+            .slider-img.img-before {
+                clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+                z-index: 2;
+            }
+
+            .slider-handle {
+                position: absolute;
+                top: 0;
+                left: 50%;
+                width: 4px;
+                height: 100%;
+                background: #fff;
+                cursor: ew-resize;
+                transform: translateX(-50%);
+                z-index: 10;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .slider-button {
+                width: 40px;
+                height: 40px;
+                background: var(--primary, #1155cc);
+                border-radius: 50%;
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            }
+
+            .slider-badge {
+                position: absolute;
+                top: 20px;
+                padding: 6px 16px;
+                border-radius: 20px;
+                color: #fff;
+                font-weight: 600;
+                font-size: 0.9rem;
+                z-index: 15;
+            }
+
+            .badge-before {
+                left: 20px;
+                background: #ef4444;
+            }
+
+            .badge-after {
+                right: 20px;
+                background: #10b981;
+            }
+
+            @media (max-width: 768px) {
+                .slider-wrapper {
+                    aspect-ratio: 4/3;
+                    border-radius: 8px;
+                }
+
+                .impact-slider-section .section-title {
+                    font-size: 2rem;
+                }
+            }
+        </style>
+
+        <!-- ═══════════════════════════════════════════════════════
+     IMPACT SLIDER SECTION
+════════════════════════════════════════════════════════ -->
+        <section class="impact-slider-section" id="impact-slider">
+            <div class="container">
+                <h2 class="section-title">Real Impact, Real Change</h2>
+                <p class="section-subtitle">Drag the slider to see the transformation</p>
+
+                <div class="slider-wrapper" id="beforeAfterSlider">
+                    <!-- Base Image (After) -->
+                    <img src="/images/after_road.png" alt="After Repair" class="slider-img img-after" />
+
+                    <!-- Top Image (Before) -->
+                    <img src="/images/before_pothole.png" alt="Before Repair" class="slider-img img-before"
+                        id="imgBefore" />
+
+                    <!-- Slider Handle -->
+                    <div class="slider-handle" id="sliderHandle">
+                        <div class="slider-button">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 3 12 9 6"></polyline>
+                                <polyline points="15 6 21 12 15 18"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Badges -->
+                    <div class="slider-badge badge-before">Before</div>
+                    <div class="slider-badge badge-after">After</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════
+     WHY USE NIRVAAH — Features Grid
+════════════════════════════════════════════════════════ -->
+        <section class="features-section" id="features" style="padding:4.5rem 0; background:#FFFDF9;">
+            <div class="container">
+                <div class="section-header text-center"
+                    style="justify-content:center;flex-direction:column;align-items:center;">
+                    <h2 class="section-title" data-i18n="whyNirvaah">Why NIRVAAH ?</h2>
+                    <p style="color:var(--text-muted);margin-top:0.6rem;max-width:520px;font-size:0.95rem;"
+                        data-i18n="everythingYouNeed">
+                        <%= __('everythingYouNeed') %>
+                    </p>
+                </div>
+
+                <div class="features-grid" style="margin-top:2.5rem;">
+
+                    <div class="feature-card">
+                        <div class="feature-icon"
+                            style="background:#f5ece0!important;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:10px;margin-bottom:1rem;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <path
+                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                <circle cx="12" cy="13" r="4" />
+                            </svg>
+                        </div>
+                        <h3 data-i18n="f1Title">
+                            <%= __('f1Title') %>
+                        </h3>
+                        <p data-i18n="f1Desc">
+                            <%= __('f1Desc') %>
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon"
+                            style="background:#f5ece0!important;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:10px;margin-bottom:1rem;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                        </div>
+                        <h3 data-i18n="f2Title">
+                            <%= __('f2Title') %>
+                        </h3>
+                        <p data-i18n="f2Desc">
+                            <%= __('f2Desc') %>
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon"
+                            style="background:#f5ece0!important;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:10px;margin-bottom:1rem;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                            </svg>
+                        </div>
+                        <h3 data-i18n="f3Title">
+                            <%= __('f3Title') %>
+                        </h3>
+                        <p data-i18n="f3Desc">
+                            <%= __('f3Desc') %>
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon"
+                            style="background:#f5ece0!important;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:10px;margin-bottom:1rem;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                            </svg>
+                        </div>
+                        <h3 data-i18n="f4Title">
+                            <%= __('f4Title') %>
+                        </h3>
+                        <p data-i18n="f4Desc">
+                            <%= __('f4Desc') %>
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon"
+                            style="background:#f5ece0!important;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:10px;margin-bottom:1rem;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                                <line x1="3" y1="9" x2="21" y2="9" />
+                                <line x1="9" y1="21" x2="9" y2="9" />
+                            </svg>
+                        </div>
+                        <h3 data-i18n="f5Title">
+                            <%= __('f5Title') %>
+                        </h3>
+                        <p data-i18n="f5Desc">
+                            <%= __('f5Desc') %>
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon"
+                            style="background:#f5ece0!important;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:10px;margin-bottom:1rem;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            </svg>
+                        </div>
+                        <h3 data-i18n="f6Title">
+                            <%= __('f6Title') %>
+                        </h3>
+                        <p data-i18n="f6Desc">
+                            <%= __('f6Desc') %>
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- 
+     HOW IT WORKS — 4-Step workflow
+ -->
+        <section id="about" style="padding:4.5rem 0;background:var(--bg);">
+            <div class="container">
+                <div class="section-header text-center"
+                    style="justify-content:center;flex-direction:column;align-items:center;margin-bottom:2.5rem;">
+                    <h2 class="section-title" data-i18n="howItWorks">
+                        HOW IT WORKS
+                    </h2>
+                </div>
+                <div
+                    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;max-width:900px;margin:0 auto;text-align:center;">
+
+                    <div class="step-card" style="padding:1.75rem 1.25rem;text-align:center;">
+                        <div class="step-num"
+                            style="width:42px;height:42px;background:var(--gradient-primary);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:1.05rem;margin:0 auto 1rem;font-family:'Poppins',sans-serif;">
+                            1</div>
+                        <div class="step-icon"
+                            style="width:52px;height:52px;margin:0 auto 0.85rem;background:#f5ece0!important;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <path
+                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                <circle cx="12" cy="13" r="4" />
+                            </svg>
+                        </div>
+                        <h4 data-i18n="hw1Title">
+                            <%= __('hw1Title') %>
+                        </h4>
+                        <p class="text-muted" style="font-size:0.85rem;margin-top:0.4rem;" data-i18n="hw1Desc">
+                            <%= __('hw1Desc') %>
+                        </p>
+                    </div>
+
+                    <div class="step-card" style="padding:1.75rem 1.25rem;text-align:center;">
+                        <div class="step-num"
+                            style="width:42px;height:42px;background:var(--gradient-primary);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:1.05rem;margin:0 auto 1rem;font-family:'Poppins',sans-serif;">
+                            2</div>
+                        <div class="step-icon"
+                            style="width:52px;height:52px;margin:0 auto 0.85rem;background:#f5ece0!important;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                        </div>
+                        <h4 data-i18n="hw2Title">
+                            <%= __('hw2Title') %>
+                        </h4>
+                        <p class="text-muted" style="font-size:0.85rem;margin-top:0.4rem;" data-i18n="hw2Desc">
+                            <%= __('hw2Desc') %>
+                        </p>
+                    </div>
+
+                    <div class="step-card" style="padding:1.75rem 1.25rem;text-align:center;">
+                        <div class="step-num"
+                            style="width:42px;height:42px;background:var(--gradient-primary);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:1.05rem;margin:0 auto 1rem;font-family:'Poppins',sans-serif;">
+                            3</div>
+                        <div class="step-icon"
+                            style="width:52px;height:52px;margin:0 auto 0.85rem;background:#f5ece0!important;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                            </svg>
+                        </div>
+                        <h4 data-i18n="hw3Title">
+                            <%= __('hw3Title') %>
+                        </h4>
+                        <p class="text-muted" style="font-size:0.85rem;margin-top:0.4rem;" data-i18n="hw3Desc">
+                            <%= __('hw3Desc') %>
+                        </p>
+                    </div>
+
+                    <div class="step-card" style="padding:1.75rem 1.25rem;text-align:center;">
+                        <div class="step-num"
+                            style="width:42px;height:42px;background:var(--gradient-primary);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:1.05rem;margin:0 auto 1rem;font-family:'Poppins',sans-serif;">
+                            4</div>
+                        <div class="step-icon"
+                            style="width:52px;height:52px;margin:0 auto 0.85rem;background:#f5ece0!important;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </div>
+                        <h4 data-i18n="hw4Title">
+                            <%= __('hw4Title') %>
+                        </h4>
+                        <p class="text-muted" style="font-size:0.85rem;margin-top:0.4rem;" data-i18n="hw4Desc">
+                            <%= __('hw4Desc') %>
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════
+     REPORT BY CATEGORY
+════════════════════════════════════════════════════════ -->
+        <section style="padding:4.5rem 0;background:#FFFDF9;" id="categories">
+            <div class="container">
+                <div class="section-header text-center"
+                    style="justify-content:center;flex-direction:column;align-items:center;margin-bottom:2.5rem;">
+                    <h2 class="section-title">Report by Category</h2>
+                </div>
+
+                <div
+                    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1.25rem;max-width:1000px;margin:0 auto;">
+
+                    <a href="/report?category=roads" class="feature-card"
+                        style="text-align:center;text-decoration:none;padding:1.5rem 1rem;">
+                        <div
+                            style="width:52px;height:52px;background:#f5ece0;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:0.75rem;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <rect x="2" y="3" width="20" height="14" rx="2" />
+                                <path d="M8 21h8M12 17v4" />
+                                <line x1="2" y1="10" x2="22" y2="10" />
+                                <line x1="9" y1="3" x2="9" y2="10" />
+                                <line x1="15" y1="3" x2="15" y2="10" />
+                            </svg>
+                        </div>
+                        <div style="font-weight:700;color:var(--primary-dark);font-size:0.9rem;">Roads</div>
+                        <div style="font-size:0.77rem;color:var(--text-muted);margin-top:0.2rem;">Potholes, damage</div>
+                    </a>
+
+                    <a href="/report?category=water" class="feature-card"
+                        style="text-align:center;text-decoration:none;padding:1.5rem 1rem;">
+                        <div
+                            style="width:52px;height:52px;background:#f5ece0;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:0.75rem;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                            </svg>
+                        </div>
+                        <div style="font-weight:700;color:var(--primary-dark);font-size:0.9rem;">Water</div>
+                        <div style="font-size:0.77rem;color:var(--text-muted);margin-top:0.2rem;">Supply issues</div>
+                    </a>
+
+                    <a href="/report?category=electricity" class="feature-card"
+                        style="text-align:center;text-decoration:none;padding:1.5rem 1rem;">
+                        <div
+                            style="width:52px;height:52px;background:#f5ece0;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:0.75rem;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                            </svg>
+                        </div>
+                        <div style="font-weight:700;color:var(--primary-dark);font-size:0.9rem;">Electricity</div>
+                        <div style="font-size:0.77rem;color:var(--text-muted);margin-top:0.2rem;">Outages, faults</div>
+                    </a>
+
+                    <a href="/report?category=sanitation" class="feature-card"
+                        style="text-align:center;text-decoration:none;padding:1.5rem 1rem;">
+                        <div
+                            style="width:52px;height:52px;background:#f5ece0;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:0.75rem;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                <path d="M10 11v6M14 11v6" />
+                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                            </svg>
+                        </div>
+                        <div style="font-weight:700;color:var(--primary-dark);font-size:0.9rem;">Sanitation</div>
+                        <div style="font-size:0.77rem;color:var(--text-muted);margin-top:0.2rem;">Garbage, drains</div>
+                    </a>
+
+                    <a href="/report?category=parks" class="feature-card"
+                        style="text-align:center;text-decoration:none;padding:1.5rem 1rem;">
+                        <div
+                            style="width:52px;height:52px;background:#f5ece0;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:0.75rem;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                        </div>
+                        <div style="font-weight:700;color:var(--primary-dark);font-size:0.9rem;">Parks</div>
+                        <div style="font-size:0.77rem;color:var(--text-muted);margin-top:0.2rem;">Maintenance</div>
+                    </a>
+
+                    <a href="/report?category=other" class="feature-card"
+                        style="text-align:center;text-decoration:none;padding:1.5rem 1rem;">
+                        <div
+                            style="width:52px;height:52px;background:#f5ece0;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:0.75rem;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                                <polyline points="10 9 9 9 8 9" />
+                            </svg>
+                        </div>
+                        <div style="font-weight:700;color:var(--primary-dark);font-size:0.9rem;">Other</div>
+                        <div style="font-size:0.77rem;color:var(--text-muted);margin-top:0.2rem;">Any civic issue</div>
+                    </a>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════
+     CTA BANNER
+════════════════════════════════════════════════════════ -->
+        <section
+            style="padding:0;background:var(--gradient-primary);border-top:3px solid var(--accent);border-bottom:3px solid var(--accent);"
+            id="contact">
+            <div class="container" style="padding-top:3.5rem;padding-bottom:3.5rem;text-align:center;">
+                <h2 style="color:#fff;font-size:clamp(1.5rem,3vw,2.15rem);font-weight:800;margin-bottom:0.75rem;"
+                    data-i18n="readyMakeDifference">
+                    <%= __('readyMakeDifference') %>
+                </h2>
+                <p style="color:rgba(255,248,236,0.8);font-size:1rem;margin-bottom:2rem;" data-i18n="joinCitizens">
+                    <%= __('joinCitizens') %>
+                </p>
+                <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+                    <a href="/register" class="btn-hero-primary" id="ctaGetStarted">
+                        Get Started &mdash; It&rsquo;s Free
+                    </a>
+                    <a href="/map" class="btn-hero-secondary" id="ctaViewComplaints">
+                        View All Complaints
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════════ -->
+        <footer style="background:var(--bg-secondary);border-top:1px solid var(--border);padding:3rem 0 1.5rem;">
+            <div class="container">
+                <div
+                    style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:2.5rem;margin-bottom:2.5rem;flex-wrap:wrap;">
+
+                    <!-- Brand column -->
+                    <div>
+                        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+                            <div
+                                style="width:40px;height:40px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff"
+                                    stroke-width="2">
+                                    <path d="M12 3v18M5 7l7-4 7 4M5 7l3 8a4 4 0 0 0 8 0l3-8M3 20h18"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </div>
+                            <span
+                                style="font-family:'Poppins',sans-serif;font-weight:800;font-size:1.15rem;color:var(--primary);letter-spacing:0.06em;">NIRVAAH</span>
+                        </div>
+                        <p style="font-size:0.83rem;color:var(--text-muted);line-height:1.7;max-width:260px;">
+                            An initiative by the Government to empower citizens with a transparent platform for
+                            reporting and tracking
+                            public infrastructure issues. Faster resolution, better governance.
+                        </p>
+
+                    </div>
+
+                    <!-- Quick Links -->
+                    <div>
+                        <div
+                            style="font-size:0.72rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--primary);margin-bottom:1rem;">
+                            Quick Links</div>
+                        <ul style="list-style:none;display:flex;flex-direction:column;gap:0.55rem;">
+                            <li><a href="/" style="color:var(--text-muted);font-size:0.85rem;">Home</a></li>
+                            <li><a href="/#about" style="color:var(--text-muted);font-size:0.85rem;">About</a></li>
+                            <li><a href="/report" style="color:var(--text-muted);font-size:0.85rem;">Report Issue</a>
+                            </li>
+                            <li><a href="/my-complaints" style="color:var(--text-muted);font-size:0.85rem;">Track
+                                    Complaint</a></li>
+                            <li><a href="/map" style="color:var(--text-muted);font-size:0.85rem;">Dashboard</a></li>
+                            <li><a href="/#contact" style="color:var(--text-muted);font-size:0.85rem;">Contact Us</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Categories -->
+                    <div>
+                        <div
+                            style="font-size:0.72rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--primary);margin-bottom:1rem;">
+                            Categories</div>
+                        <ul style="list-style:none;display:flex;flex-direction:column;gap:0.55rem;">
+                            <li><a href="/report?category=roads"
+                                    style="color:var(--text-muted);font-size:0.85rem;">Roads</a></li>
+                            <li><a href="/report?category=water"
+                                    style="color:var(--text-muted);font-size:0.85rem;">Water Supply</a>
+                            </li>
+                            <li><a href="/report?category=electricity"
+                                    style="color:var(--text-muted);font-size:0.85rem;">Electricity</a></li>
+                            <li><a href="/report?category=sanitation"
+                                    style="color:var(--text-muted);font-size:0.85rem;">Sanitation</a></li>
+                            <li><a href="/report?category=parks"
+                                    style="color:var(--text-muted);font-size:0.85rem;">Parks</a></li>
+                            <li><a href="/report?category=other"
+                                    style="color:var(--text-muted);font-size:0.85rem;">Other</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Help & Policy -->
+                    <div>
+                        <div
+                            style="font-size:0.72rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--primary);margin-bottom:1rem;">
+                            Help &amp; Policy</div>
+                        <ul style="list-style:none;display:flex;flex-direction:column;gap:0.55rem;">
+                            <li><a href="#" style="color:var(--text-muted);font-size:0.85rem;">FAQs</a></li>
+                            <li><a href="#" style="color:var(--text-muted);font-size:0.85rem;">Privacy Policy</a></li>
+                            <li><a href="#" style="color:var(--text-muted);font-size:0.85rem;">Terms of Use</a></li>
+                            <li><a href="#" style="color:var(--text-muted);font-size:0.85rem;">Grievance Redressal</a>
+                            </li>
+                            <li><a href="#" style="color:var(--text-muted);font-size:0.85rem;">RTI</a></li>
+                            <li><a href="#" style="color:var(--text-muted);font-size:0.85rem;">Sitemap</a></li>
+                        </ul>
+                    </div>
+
+                </div>
+
+                <!-- Bottom bar -->
+                <div
+                    style="border-top:1px solid var(--border);padding-top:1.25rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;">
+                    <span style="font-size:0.8rem;color:var(--text-muted);">&copy; 2025 NIRVAAH &mdash; Government
+                        Citizen
+                        Services. All rights reserved.</span>
+                    <span style="font-size:0.8rem;color:var(--text-muted);">Designed &amp; Developed for Digital India
+                        &nbsp;|&nbsp; NIC</span>
+                </div>
+            </div>
+        </footer>
+
+        <%- include('partials/pwa-install') %>
+            <%- include('partials/scripts') %>
+
+                <script>
+                    // ── Animated stat counters ────────────────────────────
+                    (function () {
+                        var els = document.querySelectorAll('.counter[data-target]');
+                        var triggered = false;
+
+                        function runCounters() {
+                            if (triggered) return;
+                            triggered = true;
+                            els.forEach(function (el) {
+                                var target = parseInt(el.dataset.target, 10);
+                                var current = 0;
+                                var increment = Math.max(1, Math.ceil(target / 70));
+                                var timer = setInterval(function () {
+                                    current = Math.min(current + increment, target);
+                                    el.textContent = current.toLocaleString('en-IN');
+                                    if (current >= target) {
+                                        clearInterval(timer);
+                                        // Append '+' for large numbers
+                                        if (target >= 10000) el.textContent = current.toLocaleString('en-IN') + '+';
+                                    }
+                                }, 22);
+                            });
+                        }
+
+                        // Trigger when stats strip enters viewport
+                        var strip = document.getElementById('statsStrip');
+                        if (strip && 'IntersectionObserver' in window) {
+                            var obs = new IntersectionObserver(function (entries) {
+                                if (entries[0].isIntersecting) runCounters();
+                            }, { threshold: 0.2 });
+                            obs.observe(strip);
+                        } else {
+                            // Fallback: run after page load
+                            setTimeout(runCounters, 400);
+                        }
+                    })();
+
+                    // ── Sync real analytics if admin endpoint available ───
+                    window.NIRVAAH?.Admin?.getAnalytics?.().then(function (data) {
+                        if (data?.analytics?.overview?.total) {
+                            var counters = document.querySelectorAll('.counter[data-target]');
+                            if (counters[1]) counters[1].dataset.target = data.analytics.overview.resolved;
+                        }
+                    }).catch(function () { });
+
+                    // ── Before/After Slider Logic ─────────────────────────
+                    (function () {
+                        var slider = document.getElementById('beforeAfterSlider');
+                        var handle = document.getElementById('sliderHandle');
+                        var imgBefore = document.getElementById('imgBefore');
+                        var isDragging = false;
+
+                        if (!slider || !handle || !imgBefore) return;
+
+                        function moveSlider(clientX) {
+                            var rect = slider.getBoundingClientRect();
+                            var percentage = ((clientX - rect.left) / rect.width) * 100;
+                            percentage = Math.max(0, Math.min(percentage, 100));
+                            imgBefore.style.clipPath = 'polygon(0 0, ' + percentage + '% 0, ' + percentage + '% 100%, 0 100%)';
+                            handle.style.left = percentage + '%';
+                        }
+
+                        handle.addEventListener('mousedown', function (e) {
+                            isDragging = true;
+                            e.preventDefault();
+                        });
+                        window.addEventListener('mouseup', function () {
+                            isDragging = false;
+                        });
+                        window.addEventListener('mousemove', function (e) {
+                            if (isDragging) moveSlider(e.clientX);
+                        });
+
+                        handle.addEventListener('touchstart', function (e) {
+                            isDragging = true;
+                        }, { passive: true });
+                        window.addEventListener('touchend', function () {
+                            isDragging = false;
+                        });
+                        window.addEventListener('touchmove', function (e) {
+                            if (isDragging && e.touches.length > 0) {
+                                if (e.cancelable) e.preventDefault();
+                                moveSlider(e.touches[0].clientX);
+                            }
+                        }, { passive: false });
+
+                        slider.addEventListener('click', function (e) {
+                            if (!isDragging) {
+                                moveSlider(e.clientX);
+                            }
+                        });
+                    })();
+                </script>
+                </body>
+
+                </html>
