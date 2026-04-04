@@ -1,0 +1,141 @@
+<%- include('partials/head') %>
+
+<div style="min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; font-family: 'Inter', sans-serif;">
+  
+  <!-- Header with Back Button -->
+  <header style="background: #fff; padding: 1rem 2rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+          <path d="M12 3v18M5 7l7-4 7 4M5 7l3 8a4 4 0 0 0 8 0l3-8M3 20h18" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+      <span style="font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.2rem; color: var(--primary); letter-spacing: 0.05em;">NIRVAAH</span>
+    </div>
+    <a href="javascript:history.back()" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 500;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back
+    </a>
+  </header>
+
+  <!-- Document Content -->
+  <main style="flex: 1; padding: 3rem 1.5rem; background: var(--bg);">
+    <div style="max-width: 850px; margin: 0 auto; background: #fff; padding: 3.5rem 4rem; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid var(--border);">
+      
+      <div style="text-align: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 2rem; margin-bottom: 2.5rem;">
+        <h1 style="font-size: 2.2rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.5rem; font-family: 'Poppins', sans-serif;">Terms and Conditions</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Effective Date: April 2026 | Document Version: 1.2.0</p>
+      </div>
+
+      <style>
+        .terms-section { margin-bottom: 2.5rem; }
+        .terms-title { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-family: 'Poppins', sans-serif; }
+        .terms-content { color: #475569; line-height: 1.8; font-size: 0.95rem; }
+        .terms-list { margin-top: 0.75rem; padding-left: 1.5rem; list-style-type: disc; }
+        .terms-list li { margin-bottom: 0.5rem; }
+        @media (max-width: 768px) {
+          main { padding: 1.5rem 1rem; }
+          .container { padding: 2rem 1.5rem; }
+        }
+      </style>
+
+      <div class="terms-section">
+        <h2 class="terms-title">1. Introduction</h2>
+        <p class="terms-content">
+          Welcome to the NIRVAAH Platform, the official digital civic reporting utility. This platform is provided to streamline the reporting, tracking, and resolution of public infrastructure grievances. By accessing, registering, or utilizing any services provided by NIRVAAH, you explicitly agree to comply with and be bound by these Terms and Conditions. If you do not agree with any part of these terms, you must refrain from using the platform immediately.
+        </p>
+      </div>
+
+      <div class="terms-section">
+        <h2 class="terms-title">2. User Responsibilities</h2>
+        <p class="terms-content">
+          As a registered citizen on this platform, you assume the following responsibilities:
+        </p>
+        <ul class="terms-content terms-list">
+          <li><strong>Information Accuracy:</strong> You agree to provide accurate, current, and complete information during registration and complaint filing.</li>
+          <li><strong>Account Security:</strong> You are responsible for safeguarding your login credentials. Any activity conducted under your account will be deemed your responsibility.</li>
+          <li><strong>Cooperation:</strong> You may be contacted by local authorities for clarification or verification regarding your submitted complaints. Genuine cooperation is expected.</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <h2 class="terms-title">3. Acceptable Use Policy</h2>
+        <p class="terms-content">
+          The NIRVAAH Platform must strictly be used for civic compliance and reporting purposes. Users may submit reports relating to public roads, sanitation, water supply, electricity, and the general maintenance of civic facilities. Submissions should feature clear descriptions and authentic photographic evidence wherever possible to assist prompt resolutions.
+        </p>
+      </div>
+
+      <div class="terms-section">
+        <h2 class="terms-title">4. Prohibited Activities</h2>
+        <p class="terms-content">
+          To ensure the platform operates efficiently for the benefit of all citizens, the following activities are strictly prohibited:
+        </p>
+        <ul class="terms-content terms-list">
+          <li>Submitting deliberately false, misleading, or fabricated complaints (spamming).</li>
+          <li>Uploading illegal, offensive, explicit, or entirely irrelevant media files.</li>
+          <li>Attempting to hack, overload, or bypass the platform's security mechanisms.</li>
+          <li>Impersonating government officials or utilizing other citizens' accounts.</li>
+        </ul>
+        <p class="terms-content" style="margin-top:0.75rem;">
+          <strong>Violations:</strong> Any violation of this policy may result in immediate suspension of account privileges and potential legal action under applicable laws.
+        </p>
+      </div>
+
+      <div class="terms-section">
+        <h2 class="terms-title">5. Privacy and Data Usage</h2>
+        <p class="terms-content">
+          NIRVAAH highly respects your privacy and is committed to protecting your personal data. Demographic information, location data (GPS), and media uploads will solely be utilized for complaint verification and resolution processes. Data is stored on secure government-compliant servers and will not be commercialized or shared with third parties, except legally authorized civic agencies.
+        </p>
+      </div>
+
+      <div class="terms-section">
+        <h2 class="terms-title">6. Complaint Handling Policy</h2>
+        <p class="terms-content">
+          While we strive for the swift resolution of all civic issues, NIRVAAH functions strictly as a mediating technical platform. The underlying public agency is ultimately responsible for the execution of repairs. Timeframes provided on the dashboard are approximations based on historical data. We cannot guarantee specific turnaround times for deeply structural infrastructure issues.
+        </p>
+      </div>
+
+      <div class="terms-section">
+        <h2 class="terms-title">7. Limitation of Liability</h2>
+        <p class="terms-content">
+          The administrators, developers, and affiliated agencies of NIRVAAH shall not be held liable for any direct, indirect, incidental, or consequential damages resulting from the use or inability to use the platform. While efforts are made to ensure platform stability, NIRVAAH is provided on an "as-is" and "as-available" basis without any definitive warranties.
+        </p>
+      </div>
+
+      <div class="terms-section">
+        <h2 class="terms-title">8. Governing Law</h2>
+        <p class="terms-content">
+          These Terms and Conditions shall be governed by and construed in accordance with standard National and State digital governance policies. Any disputes arising out of the use of this platform shall be subject to the exclusive jurisdiction of the regional administrative courts.
+        </p>
+      </div>
+
+      <div class="terms-section">
+        <h2 class="terms-title">9. Contact Information</h2>
+        <p class="terms-content">
+          If you have any questions, concerns, or require technical support regarding these Terms, please contact the administrative helpdesk at:
+          <br><br>
+          <strong>Email:</strong> policy@nirvaah.gov.in<br>
+          <strong>Technical Support:</strong> +91 (1800) 123-4567<br>
+          <strong>Address:</strong> NIRVAAH Operations Center, Department of Civic Tech.
+        </p>
+      </div>
+
+      <div style="margin-top: 3.5rem; text-align: center;">
+        <a href="javascript:history.back()" class="btn btn-primary" style="padding: 0.75rem 2rem; font-weight: 600;">I Understand, Return</a>
+      </div>
+
+    </div>
+  </main>
+
+  <footer style="padding: 1.5rem; text-align: center; font-size: 0.85rem; color: var(--text-muted); background: var(--bg-secondary); border-top: 1px solid var(--border);">
+    &copy; 2026 NIRVAAH Civic Tech Initiative. All rights reserved.
+  </footer>
+
+</div>
+
+<%- include('partials/scripts') %>
+</body>
+</html>

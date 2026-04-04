@@ -1,0 +1,209 @@
+<%- include('partials/head') %>
+<link rel="stylesheet" href="/css/profile-govt.css">
+<%- include('partials/navbar', {navPage}) %>
+
+<div class="page-wrapper profile-page">
+  <div class="profile-container">
+    <h1 class="profile-title stagger-1" data-i18n="myProfileTitle"><%= __('myProfileTitle') %></h1>
+
+    <!-- Progress Component -->
+    <div class="profile-progress-container stagger-1">
+      <div class="profile-progress-header">
+        <span data-i18n="profCompletion"><%= __('profCompletion') %></span>
+        <span id="profProgressText">80%</span>
+      </div>
+      <div class="profile-progress-track">
+        <div class="profile-progress-fill" style="width: 80%" id="profProgressBar"></div>
+      </div>
+    </div>
+
+    <!-- Profile Header Card -->
+    <div class="profile-card profile-header-card stagger-2">
+      <div class="profile-header-strip"></div>
+      <div class="profile-avatar-wrapper">
+        <div class="profile-avatar" id="avatarBig">?</div>
+        <!-- UI only edit trigger -->
+        <div class="profile-avatar-edit" title="Change Avatar">
+          <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        </div>
+      </div>
+      
+      <div class="profile-badges">
+        <span class="profile-badge">
+          <svg style="width:16px;height:16px" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+          <span data-i18n="profActiveCitizen"><%= __('profActiveCitizen') %></span>
+        </span>
+      </div>
+
+      <h2 class="profile-name" id="profName">–</h2>
+      <p class="profile-email" id="profEmail">–</p>
+      
+      <div class="profile-stats-grid">
+        <div class="profile-stat-box">
+          <div class="profile-stat-value" id="profPoints">–</div>
+          <div class="profile-stat-label" data-i18n="points"><%= __('points') %></div>
+        </div>
+        <div class="profile-stat-box">
+          <div class="profile-stat-value" id="profResolved">–</div>
+          <div class="profile-stat-label" data-i18n="resolved"><%= __('resolved') %></div>
+        </div>
+        <div class="profile-stat-box">
+          <div class="profile-stat-value" id="profTotal">–</div>
+          <div class="profile-stat-label" data-i18n="reportsCountText"><%= __('reportsCountText') %></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personal Information Card -->
+    <div class="profile-card stagger-3">
+      <h3 class="profile-section-title">
+        <svg style="width:24px;height:24px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        <span data-i18n="profPersonalInfo"><%= __('profPersonalInfo') %></span>
+      </h3>
+      <form id="updateForm">
+        <div class="profile-form-grid">
+          <div class="profile-form-group">
+            <label class="profile-form-label" data-i18n="nameLabel"><%= __('nameLabel') %></label>
+            <input type="text" class="profile-input" id="newName" data-i18n-placeholder="displayNamePlaceholder" placeholder="<%= __('displayNamePlaceholder') %>">
+          </div>
+          <div class="profile-form-group">
+            <label class="profile-form-label" data-i18n="profEmailAddr"><%= __('profEmailAddr') %></label>
+            <input type="text" class="profile-input" id="formEmail" value="user@example.com" readonly>
+          </div>
+          
+          <div class="profile-form-group">
+            <label class="profile-form-label"><span data-i18n="profPhoneNum"><%= __('profPhoneNum') %></span> <span style="font-size:0.8em;color:var(--profile-muted);font-weight:400" data-i18n="profPhoneOptional"><%= __('profPhoneOptional') %></span></label>
+            <input type="text" class="profile-input" data-i18n-placeholder="profPhonePlaceholder" placeholder="<%= __('profPhonePlaceholder') %>">
+          </div>
+          <div class="profile-form-group">
+            <label class="profile-form-label"><span data-i18n="profLoc"><%= __('profLoc') %></span> <span style="font-size:0.8em;color:var(--profile-muted);font-weight:400" data-i18n="profLocAuto"><%= __('profLocAuto') %></span></label>
+            <input type="text" class="profile-input" data-i18n-placeholder="profLocPlaceholder" placeholder="<%= __('profLocPlaceholder') %>" readonly>
+          </div>
+        </div>
+
+        <div class="text-danger text-sm mt-3 hidden" id="profErr"></div>
+        
+        <div class="profile-actions">
+          <button type="button" class="profile-btn profile-btn-outline" onclick="window.location.reload()" data-i18n="profCancel"><%= __('profCancel') %></button>
+          <button type="submit" class="profile-btn profile-btn-primary" data-i18n="saveChangesBtn">
+            <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <%= __('saveChangesBtn') %>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Account Actions & History Split -->
+    <div class="profile-form-grid stagger-4">
+      
+      <!-- Account Management -->
+      <div class="profile-card" style="margin-bottom:0">
+        <h3 class="profile-section-title">
+          <svg style="width:24px;height:24px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <span data-i18n="profAccountSec"><%= __('profAccountSec') %></span>
+        </h3>
+        
+        <div class="profile-list-item">
+          <div class="profile-list-content">
+            <div class="profile-list-icon">
+              <svg style="width:24px;height:24px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+            </div>
+            <div class="profile-list-text">
+              <h4 data-i18n="profChangePwd"><%= __('profChangePwd') %></h4>
+              <p data-i18n="profUpdateAuthKey"><%= __('profUpdateAuthKey') %></p>
+            </div>
+          </div>
+          <button type="button" class="profile-btn-text" onclick="showToast('Info', 'Password update interface would open here.', 'info')" data-i18n="profUpdateBtn"><%= __('profUpdateBtn') %></button>
+        </div>
+
+        <div class="profile-list-item">
+          <div class="profile-list-content">
+            <div class="profile-list-icon">
+              <svg style="width:24px;height:24px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            </div>
+            <div class="profile-list-text">
+              <h4 data-i18n="profSignOut"><%= __('profSignOut') %></h4>
+              <p data-i18n="profEndSession"><%= __('profEndSession') %></p>
+            </div>
+          </div>
+          <button type="button" class="profile-btn-text profile-btn-danger" onclick="window.NIRVAAH.Auth.logout()" data-i18n="profLogoutBtn"><%= __('profLogoutBtn') %></button>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="profile-card" style="margin-bottom:0">
+        <h3 class="profile-section-title">
+          <svg style="width:24px;height:24px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span data-i18n="profRecentActivity"><%= __('profRecentActivity') %></span>
+        </h3>
+        
+        <div class="activity-placeholder">
+          <div class="activity-icon">
+            <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div class="activity-body">
+            <h4 data-i18n="profMockLeakFixed"><%= __('profMockLeakFixed') %></h4>
+            <p data-i18n="profMockLeakLoc"><%= __('profMockLeakLoc') %></p>
+          </div>
+          <div class="activity-date" data-i18n="profMock2d"><%= __('profMock2d') %></div>
+        </div>
+
+        <div class="activity-placeholder">
+          <div class="activity-icon" style="background:rgba(203, 163, 101, 0.15); color:var(--profile-gold)">
+            <svg style="width:20px;height:20px" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          </div>
+          <div class="activity-body">
+            <h4 data-i18n="profMockPotholeRep"><%= __('profMockPotholeRep') %></h4>
+            <p data-i18n="profMockPotholeLoc"><%= __('profMockPotholeLoc') %></p>
+          </div>
+          <div class="activity-date" data-i18n="profMock4d"><%= __('profMock4d') %></div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<%- include('partials/scripts') %>
+<script>
+if (!window.NIRVAAH?.Auth.isLoggedIn()) {
+  window.location.href = '/login';
+} else if (window.NIRVAAH.Auth.isAdmin()) {
+  window.location.href = '/admin/dashboard';
+}
+
+const user = window.NIRVAAH.getUser();
+if (user) {
+  document.getElementById('avatarBig').textContent = user.name[0].toUpperCase();
+  document.getElementById('profName').textContent = user.name;
+  document.getElementById('profEmail').textContent = user.email;
+  // Initialize the placeholder form email
+  const formEmail = document.getElementById('formEmail');
+  if(formEmail) formEmail.value = user.email;
+
+  document.getElementById('profPoints').textContent = (user.points||0).toLocaleString();
+  document.getElementById('profResolved').textContent = user.resolvedCount||0;
+  document.getElementById('profTotal').textContent = user.complaintsCount||0;
+  document.getElementById('newName').value = user.name;
+  document.getElementById('navAvatar').textContent = user.name[0].toUpperCase();
+}
+
+document.getElementById('updateForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = document.getElementById('newName').value.trim();
+  const err = document.getElementById('profErr');
+  if (!name) { err.textContent = '<%= __("nameEmptyErr") %>'; err.classList.remove('hidden'); return; }
+  try {
+    const data = await window.NIRVAAH.Auth.updateProfile({ name });
+    showToast('<%= __("savedToast") %>', '<%= __("profileUpdatedDesc") %>', 'success');
+    document.getElementById('profName').textContent = data.user.name;
+    document.getElementById('avatarBig').textContent = data.user.name[0].toUpperCase();
+    document.getElementById('navAvatar').textContent = data.user.name[0].toUpperCase();
+    err.classList.add('hidden');
+  } catch(err2) {
+    err.textContent = err2.message; err.classList.remove('hidden');
+  }
+});
+</script>
+</body></html>

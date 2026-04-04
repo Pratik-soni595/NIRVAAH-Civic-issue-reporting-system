@@ -1,0 +1,217 @@
+<%- include('partials/head') %>
+<%- include('partials/navbar', {navPage}) %>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="/css/detail-page.css">
+
+<div class="page-wrapper">
+  <div class="detail-page">
+    <div class="detail-container">
+      <div id="loadingState" class="detail-loading">
+        <div class="detail-spinner"></div>
+        <div class="detail-loading-text"><%= __('loading') || 'Loading...' %></div>
+      </div>
+      <div id="content" class="hidden"></div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/scripts') %>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+if (!window.NIRVAAH?.Auth.isLoggedIn()) {
+  window.location.href = '/login';
+} else if (window.NIRVAAH.Auth.isAdmin()) {
+  window.location.href = '/admin/dashboard';
+}
+const me = window.NIRVAAH.getUser();
+const id = new URLSearchParams(location.search).get('id');
+if (!id) location.href = '/my-complaints';
+
+const statusColors = { pending: '#991B1B', in_progress: '#9A6700', resolved: '#4A3B8A' };
+const statusLabels = {
+  pending:     '<%= __("pending") %>',
+  in_progress: '<%= __("inProgress") %>',
+  resolved:    '<%= __("resolved") %>'
+};
+
+function fmtDate(d) {
+  const dt = new Date(d);
+  return dt.toLocaleDateString('en-IN', { day:'2-digit', month:'2-digit', year:'numeric' })
+    + ', ' + dt.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+function catLabel(c) { return (c||'').replace(/_/g, ' '); }
+
+async function load() {
+  try {
+    const data = await window.NIRVAAH.Complaints.getById(id);
+    const c = data.complaint;
+    document.title = `${c.title} – NIRVAAH`;
+    document.getElementById('loadingState').classList.add('hidden');
+    const div = document.getElementById('content');
+    div.classList.remove('hidden');
+    const hasVoted = c.votes?.some(v => (v._id || v) === me?.id);
+    const isOwner = me && (c.user?._id === me.id);
+    const initial = c.user?.name?.[0]?.toUpperCase() || '?';
+    const sColor = statusColors[c.status] || '#7A1C1C';
+
+    div.innerHTML = `
+      <!-- Breadcrumb -->
+      <div class="detail-breadcrumb">
+        <a href="/dashboard"><%= __('dashboard') %></a>
+        <span class="bc-sep">›</span>
+        <span class="bc-current">${c.title}</span>
+      </div>
+
+      <div class="detail-grid">
+        <!-- ═══ LEFT COLUMN ═══ -->
+        <div class="detail-left">
+
+          <!-- Image -->
+          ${c.images?.length ? `
+          <div class="detail-image-wrap">
+            <img id="mainImg" src="${c.images[0].url}" alt="${c.title}" class="detail-main-image">
+            ${c.images.length > 1 ? `
+            <div class="detail-thumbnails">
+              ${c.images.map((img, i) => `<img src="${img.url}" class="detail-thumb ${i===0?'active':''}" onclick="switchImg(this,'${img.url}')" loading="lazy">`).join('')}
+            </div>` : ''}
+          </div>
+          ` : `
+          <div class="detail-no-image">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
+            </svg>
+          </div>
+          `}
+
+          <!-- Title + Actions Row -->
+          <div class="detail-title-row">
+            <h1 class="detail-title">${c.title}</h1>
+            <div class="detail-inline-actions">
+              <div class="detail-status-inline">
+                <span class="detail-status-dot ${c.status}"></span>
+                <span class="detail-status-label">${statusLabels[c.status] || c.status}</span>
+              </div>
+              <div class="detail-vote-count-inline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                <span id="vcInline">${c.voteCount || 0}</span>
+              </div>
+              ${!isOwner ? `
+              <button id="voteBtn" onclick="toggleVote()" class="detail-vote-btn ${hasVoted ? 'voted' : 'not-voted'}">
+                ${hasVoted ? '<%= __("voted") %>' : '+ Vote'}
+              </button>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Reporter Meta -->
+          <div class="detail-meta">
+            <div class="detail-meta-avatar">${initial}</div>
+            <span class="detail-meta-name">${c.user?.name || '<%= __("unknownUser") %>'}</span>
+            <span class="detail-meta-time">${fmtDate(c.createdAt)}</span>
+          </div>
+
+          <!-- Badges -->
+          <div class="detail-badges">
+            <span class="detail-badge detail-badge-${c.priority}">${c.priority}</span>
+            <span class="detail-badge detail-badge-category">${catLabel(c.category)}</span>
+            ${c.isDuplicate ? `<span class="detail-badge detail-badge-duplicate"><%= __('duplicateFlagged') %></span>` : ''}
+          </div>
+
+          <!-- Description — plain text -->
+          <div class="detail-desc-label" data-i18n="descriptionHeading"><%= __('descriptionHeading') %></div>
+          <div class="detail-desc-text">${c.description}</div>
+
+          <!-- Admin Note -->
+          ${c.adminNote ? `
+          <div class="detail-admin-note">
+            <div class="detail-admin-note-label"><%= __('adminNoteTitle') %></div>
+            <div class="detail-admin-note-text">${c.adminNote}</div>
+          </div>
+          ` : ''}
+
+          <!-- Status Timeline -->
+          ${c.statusHistory?.length ? `
+          <div class="detail-timeline-label" data-i18n="statusTimeline"><%= __('statusTimeline') %></div>
+          ${c.statusHistory.map(h => `
+          <div class="timeline-item">
+            <div class="timeline-dot" style="background:${statusColors[h.status]||'#7A1C1C'}"></div>
+            <div>
+              <div class="tl-status">${statusLabels[h.status]||h.status}</div>
+              ${h.note ? `<div class="tl-note">${h.note}</div>` : ''}
+              <div class="tl-date">${new Date(h.timestamp).toLocaleString()}</div>
+            </div>
+          </div>
+          `).join('')}
+          ` : ''}
+
+        </div>
+
+        <!-- ═══ RIGHT COLUMN ═══ -->
+        <div class="detail-right">
+
+          <!-- Map -->
+          <div class="detail-map-wrap">
+            <div id="detailMap" class="detail-map"></div>
+          </div>
+
+          <!-- Location — plain text -->
+          <div class="detail-location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span>${c.location?.address || '<%= __("noAddress") %>'} ${c.location?.landmark ? `· <%= __("nearLandmark") %> ${c.location.landmark}` : ''}</span>
+          </div>
+
+          <!-- Status Summary -->
+          <div class="detail-status-summary">
+            <div class="detail-status-summary-dot ${c.status}"></div>
+            <div>
+              <div class="detail-status-summary-text">${statusLabels[c.status] || c.status}</div>
+              <div class="detail-status-summary-sub">${c.statusHistory?.length ? 'Updated ' + new Date(c.statusHistory[c.statusHistory.length-1].timestamp).toLocaleDateString() : 'Reported ' + new Date(c.createdAt).toLocaleDateString()}</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    // Map
+    if (c.location?.coordinates) {
+      const [lng, lat] = c.location.coordinates;
+      const dm = L.map('detailMap', { scrollWheelZoom: false }).setView([lat,lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(dm);
+      L.marker([lat,lng], {
+        icon: L.divIcon({ className:'', html:`<div style="width:14px;height:14px;border-radius:50%;background:${sColor};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>`, iconSize:[14,14], iconAnchor:[7,7] })
+      }).addTo(dm).bindPopup(c.title).openPopup();
+    }
+  } catch(err) {
+    document.getElementById('loadingState').innerHTML = `
+      <div class="detail-error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+        <div class="detail-error-title"><%= __('notFound') %></div>
+        <a href="/my-complaints" class="detail-error-btn"><%= __('backBtn') %></a>
+      </div>`;
+  }
+}
+
+function switchImg(thumb, url) {
+  document.getElementById('mainImg').src = url;
+  document.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active'));
+  thumb.classList.add('active');
+}
+
+async function toggleVote() {
+  try {
+    const data = await window.NIRVAAH.Complaints.vote(id);
+    document.getElementById('vcInline').textContent = data.voteCount;
+    const btn = document.getElementById('voteBtn');
+    btn.className = `detail-vote-btn ${data.voted ? 'voted' : 'not-voted'}`;
+    btn.textContent = data.voted ? '<%= __("voted") %>' : '+ Vote';
+    showToast(data.voted ? '<%= __("voted") %>!' : '<%= __("voteRemoved") %>', `${data.voteCount} <%= __("votesTitle") %>.`, 'success');
+  } catch(e) { showToast('Error', e.message, 'error'); }
+}
+
+load();
+</script>
+</body></html>

@@ -1,0 +1,158 @@
+<%- include('partials/head') %>
+  <%- include('partials/navbar', {navPage}) %>
+
+    <div class="page-wrapper">
+      <div class="container" style="padding-top:2rem;padding-bottom:3rem;max-width:720px">
+
+        <!-- PAGE HEADER -->
+        <div class="breadcrumb mb-2">
+          <a href="/dashboard" data-i18n="dashboard">
+            <%= __('dashboard') %>
+          </a>
+          <span>›</span>
+          <span data-i18n="notificationsHeader">
+            <%= __('notificationsHeader') %>
+          </span>
+        </div>
+
+        <div
+          style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.75rem">
+          <div>
+            <h1 class="section-title" style="font-size:1.75rem;padding-bottom:.5rem" data-i18n="notificationsHeader">
+              <%= __('notificationsHeader') %>
+            </h1>
+            <p class="text-muted">Stay updated on your reported issues</p>
+          </div>
+          <button onclick="markAll()" class="btn btn-outline btn-sm" data-i18n="markAllRead">
+            <%= __('markAllRead') %>
+          </button>
+        </div>
+
+        <!-- NOTIFICATIONS LIST -->
+        <div id="list">
+          <div class="loading-center">
+            <div class="spinner"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <%- include('partials/scripts') %>
+      <script>
+        if (!window.NIRVAAH?.Auth.isLoggedIn()) {
+          window.location.href = '/login';
+        } else if (window.NIRVAAH.Auth.isAdmin()) {
+          window.location.href = '/admin/dashboard';
+        }
+
+        const typeLabels = {
+          status_change: 'Status Update',
+          vote_received: 'Vote Received',
+          complaint_resolved: 'Issue Resolved',
+          system: 'System Notice'
+        };
+
+        const typeColors = {
+          status_change: 'var(--in-progress)',
+          vote_received: 'var(--resolved)',
+          complaint_resolved: 'var(--resolved)',
+          system: 'var(--primary)'
+        };
+
+        async function load() {
+          try {
+            const data = await window.NIRVAAH.Notifications.getAll();
+            const notifs = data.notifications || [];
+
+            if (!notifs.length) {
+              document.getElementById('list').innerHTML = `
+        <div class="empty-state" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:4rem 2rem;text-align:center">
+          <div style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.75rem">Notifications</div>
+          <div class="empty-title" data-i18n="noNotifications"><%= __('noNotifications') %></div>
+          <div class="empty-desc" style="margin-top:.5rem" data-i18n="noNotificationsDesc"><%= __('noNotificationsDesc') %></div>
+        </div>`;
+              return;
+            }
+
+            document.getElementById('list').innerHTML = notifs.map(n => {
+              const typeColor = typeColors[n.type] || 'var(--primary)';
+              const typeLabel = typeLabels[n.type] || 'Notification';
+              const isUnread = !n.read;
+
+              return `
+        <div id="n-${n._id}" onclick="markRead('${n._id}')"
+          style="
+            display:flex;align-items:flex-start;gap:1rem;
+            padding:1rem 1.25rem;
+            background:${isUnread ? 'rgba(123,30,43,.03)' : 'var(--bg-card)'};
+            border:1px solid ${isUnread ? 'rgba(123,30,43,.2)' : 'var(--border-light)'};
+            border-left:4px solid ${isUnread ? typeColor : 'var(--border)'};
+            border-radius:var(--radius-sm);
+            margin-bottom:.6rem;
+            cursor:pointer;
+            transition:all .2s ease;
+          "
+          onmouseover="this.style.boxShadow='var(--shadow-card)'"
+          onmouseout="this.style.boxShadow=''">
+
+          <!-- TYPE LABEL -->
+          <div style="flex-shrink:0;margin-top:2px">
+            <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:${typeColor}15;color:${typeColor};border:1px solid ${typeColor}30">
+              ${typeLabel}
+            </span>
+          </div>
+
+          <!-- CONTENT -->
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:${isUnread ? 700 : 600};font-size:.92rem;color:var(--text);margin-bottom:.2rem;line-height:1.35">${n.title}</div>
+            <div style="font-size:.83rem;color:var(--text-muted);line-height:1.45">${n.message}</div>
+            <div style="display:flex;align-items:center;gap:1rem;margin-top:.4rem;flex-wrap:wrap">
+              <span style="font-size:.74rem;color:var(--text-dim)">
+                ${new Date(n.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </span>
+              ${n.complaint
+                  ? `<a href="/complaint?id=${n.complaint._id || n.complaint}"
+                    style="font-size:.76rem;color:var(--primary);font-weight:600"
+                    onclick="event.stopPropagation()" data-i18n="viewComplaintLink">
+                    <%= __('viewComplaintLink') %>
+                  </a>`
+                  : ''}
+            </div>
+          </div>
+
+          <!-- UNREAD DOT -->
+          ${isUnread ? `<div style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;margin-top:6px"></div>` : ''}
+        </div>`;
+            }).join('');
+          } catch (e) {
+            document.getElementById('list').innerHTML = `
+      <div class="empty-state" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:4rem 2rem;text-align:center">
+        <div class="empty-title" data-i18n="failedToLoad"><%= __('failedToLoad') %></div>
+      </div>`;
+          }
+        }
+
+        async function markRead(id) {
+          await window.NIRVAAH.Notifications.markRead(id).catch(() => { });
+          const el = document.getElementById(`n-${id}`);
+          if (el) {
+            el.style.background = 'var(--bg-card)';
+            el.style.borderColor = 'var(--border-light)';
+            el.style.borderLeftColor = 'var(--border)';
+            const dot = el.querySelector('div[style*="border-radius:50%"]');
+            if (dot) dot.remove();
+          }
+        }
+
+        async function markAll() {
+          await window.NIRVAAH.Notifications.markAllRead().catch(() => { });
+          showToast('<%= __("doneToast") %>', '<%= __("allMarkedRead") %>', 'success');
+          load();
+        }
+
+        load();
+      </script>
+      </body>
+
+      </html>
