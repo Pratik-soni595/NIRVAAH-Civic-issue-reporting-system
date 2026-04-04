@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description"
+        content="NIRVAAH – Smart Civic Issue Reporting Platform. Report potholes, garbage, water leakage, electricity issues with GPS and photos.">
+
+    <title>
+        <%= title %>
+    </title>
+
+    <!-- Fonts: Montserrat + Poppins + Noto Sans Devanagari -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/govt-theme.css">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/pwa/manifest.json">
+    <meta name="theme-color" content="#7A1C1C">
+    <link rel="icon" href="/assets/icons/icon-96.png" type="image/png">
+
+    <!-- Capture PWA install prompt early -->
+    <script>
+        window._pwaInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            window._pwaInstallPrompt = e;
+            var btn = document.getElementById('pwaInstallBtn');
+            if (btn) btn.classList.add('pwa-ready');
+            console.log('[PWA] Install prompt captured early.');
+        });
+    </script>
+</head>
+
+<body
+    class="<%= typeof navPage !== 'undefined' ? (navPage === 'dashboard' ? 'dashboard-page' : (navPage === 'report' ? 'report-page' : '')) : '' %>">
