@@ -77,7 +77,13 @@ router.get("/issue", (req, res) =>
 );
 
 // ── Admin pages ────────────────────────────────────
-router.get("/admin", (req, res) => res.redirect("/admin/dashboard"));
+router.get("/admin", (req, res) => res.redirect("/admin/login"));
+router.get("/admin/login", (req, res) =>
+  res.render("admin-login", { title: "Admin Login – NIRVAAH" }),
+);
+router.get("/admin/register", (req, res) =>
+  res.render("admin-register", { title: "Admin Register – NIRVAAH" }),
+);
 router.get("/admin/dashboard", (req, res) =>
   res.render("admin/dashboard", {
     title: "Admin Dashboard – NIRVAAH",

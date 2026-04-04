@@ -8,8 +8,8 @@
       <div class="auth-logo-icon" style="display:inline-flex;align-items:center;justify-content:center;">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </div>
-      <h1 class="auth-title" data-i18n="joinNirvaah"><%= __('joinNirvaah') %></h1>
-      <p class="auth-subtitle" data-i18n="createDesc"><%= __('createDesc') %></p>
+      <h1 class="auth-title">Admin Register</h1>
+      <p class="auth-subtitle">Create a new administrator account</p>
     </div>
 
     <form id="registerForm" novalidate>
@@ -21,18 +21,10 @@
         <label class="form-label" data-i18n="emailAddress"><%= __('emailAddress') %></label>
         <input type="email" class="form-control" id="email" data-i18n-placeholder="emailPlaceholder" placeholder="<%= __('emailPlaceholder') %>" required>
       </div>
-      <div class="form-group">
-        <label class="form-label" data-i18n="addressLabel"><%= __('addressLabel') || 'Address / Area' %></label>
-        <input type="text" class="form-control" id="address" data-i18n-placeholder="addressPlaceholder" placeholder="<%= __('addressPlaceholder') || 'Street name or area' %>" required>
-      </div>
       <div class="form-group" style="display:flex;gap:1rem;">
         <div style="flex:1">
           <label class="form-label" data-i18n="wardNoLabel"><%= __('wardNoLabel') || 'Ward Number' %></label>
           <input type="text" class="form-control" id="wardNo" data-i18n-placeholder="wardNoPlaceholder" placeholder="<%= __('wardNoPlaceholder') || 'e.g. 12' %>" required>
-        </div>
-        <div style="flex:1">
-          <label class="form-label" data-i18n="pincodeLabel"><%= __('pincodeLabel') || 'Pincode' %></label>
-          <input type="text" class="form-control" id="pincode" data-i18n-placeholder="pincodePlaceholder" placeholder="<%= __('pincodePlaceholder') || 'e.g. 400001' %>" required>
         </div>
       </div>
       <div class="form-group">
@@ -57,13 +49,13 @@
       <div class="form-group">
         <label class="form-label"><%= __('confirmPassword') %></label>
         <input type="password" class="form-control" id="confirmPassword" data-i18n-placeholder="repeatPassword" placeholder="<%= __('repeatPassword') %>" required>
-        <div style="margin-top:0.5rem;text-align:right">
-          <a href="/admin/login" style="font-weight:400;font-size:0.8rem;text-transform:none;letter-spacing:normal;color:var(--primary);text-decoration:none;margin-right:10px;">Admin Login</a>
-          <a href="/admin/register" style="font-weight:400;font-size:0.8rem;text-transform:none;letter-spacing:normal;color:var(--primary);text-decoration:none;">Admin Register</a>
-        </div>
       </div>
 
-
+      <div class="form-group" id="adminSecretBox" style="background:rgba(239, 68, 68, 0.05);padding:1rem;border-radius:var(--radius-sm);border:1px solid rgba(239, 68, 68, 0.2)">
+        <label class="form-label" style="color:var(--danger)" data-i18n="adminSecretKey"><%= __('adminSecretKey') %></label>
+        <input type="password" class="form-control" id="adminSecret" data-i18n-placeholder="adminSecretPlaceholder" placeholder="<%= __('adminSecretPlaceholder') %>" required>
+        <div class="text-xs text-muted mt-1">Required for Admin registration</div>
+      </div>
 
       <div class="form-group" style="display:flex;align-items:flex-start;gap:0.5rem">
         <input type="checkbox" id="terms" style="accent-color:var(--primary);width:16px;height:16px;margin-top:2px;flex-shrink:0">
@@ -79,7 +71,8 @@
 
     <div class="divider"></div>
     <p class="text-center text-sm text-muted">
-      <%= __('alreadyHaveAccount') %> <a href="/login" class="text-primary fw-bold" data-i18n="signInLinkText"><%= __('signInLinkText') %></a>
+      Already admin? <a href="/admin/login" class="text-primary fw-bold">Sign in</a><br>
+      <span style="display:inline-block;margin-top:0.5rem;">Citizen user? <a href="/register" class="text-primary fw-bold">Register here</a></span>
     </p>
   </div>
 </div>
@@ -88,7 +81,12 @@
 <script src="/js/api.js"></script>
 <script>
 if (window.NIRVAAH?.Auth.isLoggedIn()) {
-  window.location.href = window.NIRVAAH.Auth.isAdmin() ? '/admin/dashboard' : '/dashboard';
+  const u = window.NIRVAAH.getUser();
+  if (u?.accountType === 'admin' || u?.role === 'admin') {
+    window.location.href = '/admin/dashboard';
+  } else {
+    window.location.href = '/dashboard';
+  }
 }
 
 function checkStrength(val) {
@@ -126,15 +124,13 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
   const password = document.getElementById('password').value;
   const confirm = document.getElementById('confirmPassword').value;
   const terms = document.getElementById('terms').checked;
-  const address = document.getElementById('address').value.trim();
   const wardNo = document.getElementById('wardNo').value.trim();
-  const pincode = document.getElementById('pincode').value.trim();
-  const role = 'citizen';
-  const adminSecret = '';
+  const adminSecret = document.getElementById('adminSecret').value.trim();
+  const role = 'admin';
   const errEl = document.getElementById('regError');
   errEl.classList.add('hidden');
 
-  if (!name||!email||!password||!address||!wardNo||!pincode) { errEl.textContent='<%= __("allFieldsReq") %>'; errEl.classList.remove('hidden'); return; }
+  if (!name||!email||!password||!wardNo||!adminSecret) { errEl.textContent='<%= __("allFieldsReq") %>'; errEl.classList.remove('hidden'); return; }
   if (password !== confirm) { errEl.textContent='<%= __("pwdsNotMatch") %>'; errEl.classList.remove('hidden'); return; }
   if (password.length < 6) { errEl.textContent='<%= __("pwdMin6Chars") %>'; errEl.classList.remove('hidden'); return; }
   if (!terms) { errEl.textContent='<%= __("acceptTermsReq") %>'; errEl.classList.remove('hidden'); return; }
@@ -143,9 +139,16 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
   btn.disabled=true; btn.textContent='<%= __("creatingAccountText") %>';
 
   try {
-    const data = await window.NIRVAAH.Auth.register(name, email, password, role, adminSecret, wardNo, address, pincode);
+    const data = await window.NIRVAAH.Auth.register(name, email, password, role, adminSecret, wardNo, "", "");
+    
+    // Check if created account is actually admin
+    if (data.accountType !== 'admin' && data.user?.role !== 'admin') {
+      window.NIRVAAH.Auth.logout();
+      throw new Error("Admin registration failed. The account was created as a citizen instead (Invalid Admin Secret?).");
+    }
+
     btn.textContent='<%= __("accountCreatedSuccess") %>';
-    setTimeout(() => window.location.href = '/dashboard', 800);
+    setTimeout(() => window.location.href = '/admin/dashboard', 800);
   } catch (err) {
     errEl.textContent = err.message||'<%= __("registrationFailed") %>';
     errEl.classList.remove('hidden');

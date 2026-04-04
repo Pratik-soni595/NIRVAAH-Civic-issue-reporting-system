@@ -741,12 +741,14 @@
                     })();
 
                     // ── Sync real analytics if admin endpoint available ───
-                    window.NIRVAAH?.Admin?.getAnalytics?.().then(function (data) {
-                        if (data?.analytics?.overview?.total) {
-                            var counters = document.querySelectorAll('.counter[data-target]');
-                            if (counters[1]) counters[1].dataset.target = data.analytics.overview.resolved;
-                        }
-                    }).catch(function () { });
+                    if (window.NIRVAAH?.Auth?.isAdmin?.()) {
+                        window.NIRVAAH.Admin.getAnalytics().then(function (data) {
+                            if (data?.analytics?.overview?.total) {
+                                var counters = document.querySelectorAll('.counter[data-target]');
+                                if (counters[1]) counters[1].dataset.target = data.analytics.overview.resolved;
+                            }
+                        }).catch(function () { });
+                    }
 
                     // ── Before/After Slider Logic ─────────────────────────
                     (function () {
