@@ -105,6 +105,41 @@ TRS_GPS_ACCURACY_MAX_M=100
 npm install
 ```
 
+## How to Run the Project (Local Setup)
+
+Follow these steps to run the project locally from scratch:
+
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd NIRVAAH-Civic-issue-reporting-system
+   ```
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+3. **Create your environment file**
+   - Create a `.env` file in the root folder.
+   - Copy the variables from the **Environment Variables** section above.
+   - Fill in real values for MongoDB, JWT, SMTP, and Cloudinary.
+4. **(Optional) Seed starter data**
+   ```bash
+   npm run seed
+   ```
+5. **Start the app**
+   ```bash
+   # development mode (auto-restart)
+   npm run dev
+   ```
+   or
+   ```bash
+   # normal mode
+   npm start
+   ```
+6. **Open in browser**
+   - App: `http://localhost:5000`
+   - Health check: `http://localhost:5000/api/health`
+
 ## Run Locally
 
 ```bash
