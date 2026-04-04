@@ -15,10 +15,12 @@
 
     <!-- Overview Stats -->
     <div class="stats-grid mb-4">
-      <div class="stat-card"><div class="stat-number primary" id="tot">–</div><div class="stat-label" data-i18n="totalReportsStat"><%= __('totalReportsStat') %></div></div>
-      <div class="stat-card"><div class="stat-number primary" id="rate">–</div><div class="stat-label" data-i18n="resolutionRate"><%= __('resolutionRate') %></div></div>
-      <div class="stat-card"><div class="stat-number primary" id="avgTime">–</div><div class="stat-label" data-i18n="avgResTime"><%= __('avgResTime') %></div></div>
-      <div class="stat-card"><div class="stat-number primary" id="votes">–</div><div class="stat-label" data-i18n="totalUpvotes"><%= __('totalUpvotes') %></div></div>
+      <div class="stat-card"><div class="stat-icon"></div><div class="stat-number primary" id="analyticsTotal">N/A</div><div class="stat-label" data-i18n="total"><%= __('total') %></div></div>
+      <div class="stat-card"><div class="stat-icon"></div><div class="stat-number" style="color:var(--pending)" id="analyticsPending">N/A</div><div class="stat-label" data-i18n="pending"><%= __('pending') %></div></div>
+      <div class="stat-card"><div class="stat-icon"></div><div class="stat-number" style="color:var(--in-progress)" id="analyticsInProgress">N/A</div><div class="stat-label" data-i18n="inProgress"><%= __('inProgress') %></div></div>
+      <div class="stat-card"><div class="stat-icon"></div><div class="stat-number" style="color:var(--resolved)" id="analyticsResolved">N/A</div><div class="stat-label" data-i18n="resolved"><%= __('resolved') %></div></div>
+      <div class="stat-card"><div class="stat-icon"></div><div class="stat-number primary" id="analyticsResolutionRate">N/A</div><div class="stat-label" data-i18n="resolutionRate"><%= __('resolutionRate') %></div></div>
+      <div class="stat-card"><div class="stat-icon"></div><div class="stat-number primary" id="analyticsAvgResolutionTime">N/A</div><div class="stat-label" data-i18n="avgResTime"><%= __('avgResTime') %></div></div>
     </div>
 
     <!-- Charts Row 1 -->
@@ -75,14 +77,15 @@ async function loadAnalytics() {
     const response = await window.NIRVAAH.Admin.getAnalytics();
     const data = response.analytics;
     const ov = data.overview;
+    const avgResolutionDays = Number(data.avgResolutionDays || 0);
     
     // 1. Populate Overview Stats
-    document.getElementById('tot').textContent = ov.total;
-    document.getElementById('rate').textContent = data.resolutionRate + '%';
-    
-    // Extract actual calculated values from the API
-    document.getElementById('avgTime').textContent = data.avgResolutionDays > 0 ? (data.avgResolutionDays + ' <%= __("daysText") %>') : '<%= __("naText") %>';
-    document.getElementById('votes').textContent = Math.floor(data.totalUpvotes || 0).toLocaleString();
+    document.getElementById('analyticsTotal').textContent = Number(ov.total || 0).toLocaleString();
+    document.getElementById('analyticsPending').textContent = Number(ov.pending || 0).toLocaleString();
+    document.getElementById('analyticsInProgress').textContent = Number(ov.inProgress || 0).toLocaleString();
+    document.getElementById('analyticsResolved').textContent = Number(ov.resolved || 0).toLocaleString();
+    document.getElementById('analyticsResolutionRate').textContent = Number(data.resolutionRate || 0) + '%';
+    document.getElementById('analyticsAvgResolutionTime').textContent = avgResolutionDays > 0 ? (avgResolutionDays.toFixed(1) + ' <%= __("daysText") %>') : '<%= __("naText") %>';
     
     renderCharts(data);
   } catch(e) { 
