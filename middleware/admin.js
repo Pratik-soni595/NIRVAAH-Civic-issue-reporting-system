@@ -7,7 +7,8 @@
  * Admin guard middleware — must be used AFTER protect middleware
  */
 const adminOnly = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
+  console.log(`[Admin check] req.accountType: ${req.accountType}, req.user.role: ${req.user?.role}, req.user.accountType: ${req.user?.accountType}`);
+  if (req.user && (req.accountType === 'admin' || req.user.role === 'admin' || req.user.accountType === 'admin')) {
     return next();
   }
   return res.status(403).json({

@@ -2,6 +2,52 @@
 
 <%- include('../partials/admin-navbar') %>
 
+<style>
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+  .filter-bar > input, .filter-bar > select {
+    flex: 1 1 200px; /* Allow filters to grow and shrink, min 200px */
+    max-width: 100%;
+  }
+  .table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--bg-card, #fff);
+    border-radius: 8px;
+    border: 1px solid var(--border, #ccc);
+  }
+  table {
+    width: 100%;
+    min-width: 900px; /* Force scroll on small screens */
+    border-collapse: collapse;
+  }
+  thead th {
+    background: rgba(0,0,0,0.03);
+    padding: 12px 10px;
+    text-align: left;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-muted, #666);
+    border-bottom: 2px solid var(--border, #ccc);
+  }
+  .admin-main {
+    flex: 1;
+    padding: 20px;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  @media (max-width: 768px) {
+    .admin-main { padding: 15px; }
+  }
+</style>
+
 <div style="display:flex;min-height:100vh;padding-top:72px">
   <%- include('../partials/admin-sidebar', {navPage}) %>
 
@@ -11,7 +57,7 @@
     </div>
 
     <div class="filter-bar">
-      <input type="text" id="search" data-i18n-placeholder="searchTitlePlaceholder" placeholder="<%= __('searchTitlePlaceholder') %>" oninput="debounce()" style="min-width:200px; padding:8px 12px; border:1px solid var(--border, #ccc); border-radius:6px; outline:none;">
+      <input type="text" id="search" data-i18n-placeholder="searchTitlePlaceholder" placeholder="<%= __('searchTitlePlaceholder') %>" oninput="debounce()" style="padding:10px 12px; border:1px solid var(--border, #ccc); border-radius:6px; outline:none;">
       <select id="catF" onchange="load()" style="padding:8px 12px; border:1px solid var(--border, #ccc); border-radius:6px; outline:none; background:var(--bg, #fff); cursor:pointer;">
         <option value="" data-i18n="allCategories"><%= __('allCategories') %></option>
         <% [['pothole',__('catPothole')],['garbage',__('catGarbage')],['water_leakage',__('catWaterLeak')],['electricity',__('catElectricity')],['road_damage',__('catRoadDamage')],['street_light',__('catStreetLight')],['sewage',__('catSewage')],['other',__('catOther')]].forEach(([v,l])=>{ %>
@@ -34,7 +80,7 @@
     </div>
 
     <div class="table-wrapper">
-      <table>
+      <table style="border:none;">
         <thead><tr><th style="width:22%" data-i18n="thTitle"><%= __('thTitle') %></th><th data-i18n="thCategory"><%= __('thCategory') %></th><th data-i18n="thStatus"><%= __('thStatus') %></th><th data-i18n="thPriority"><%= __('thPriority') %></th><th data-i18n="thVotes"><%= __('thVotes') %></th><th data-i18n="thReporter"><%= __('thReporter') %></th><th data-i18n="thDate"><%= __('thDate') %></th><th style="min-width:180px" data-i18n="thActions"><%= __('thActions') %></th></tr></thead>
         <tbody id="tBody"><tr><td colspan="8" class="text-center text-muted" style="padding:3rem" data-i18n="loading"><%= __('loading') %></td></tr></tbody>
       </table>
@@ -78,7 +124,7 @@ async function load() {
         <td class="text-sm text-muted" style="padding: 14px 10px; white-space:nowrap;">${new Date(c.createdAt).toLocaleDateString()}</td>
         <td style="padding: 14px 10px;">
           <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-            <select onchange="updStat('${c._id}',this.value,this)" style="background:var(--bg, #fff);border:1px solid var(--border, #ccc);color:var(--text, #333);border-radius:4px;padding:5px 8px;font-size:.8rem;cursor:pointer;outline:none;transition:border-color 0.2s;"><option value="" disabled selected><%= __("statusSelectOption") %></option><option value="pending"><%= __("pending") %></option><option value="in_progress"><%= __("inProgress") %></option><option value="resolved"><%= __("resolved") %></option></select>
+            <select onchange="updStat('${c._id}',this.value,this)" style="background:var(--bg, #fff);border:1px solid var(--border, #ccc);color:var(--text, #333);border-radius:4px;padding:5px 8px;font-size:.8rem;cursor:pointer;outline:none;transition:border-color 0.2s;"><option value="" disabled selected><%= __("statusSelectOption") %></option><option value="pending"><%= __("pending") %></option><option value="in_progress"><%= __("inProgress") %></option><option value="resolve_redirect">📷 Resolve via TRS</option></select>
           </div>
         </td>
       </tr>`).join('');
@@ -94,7 +140,10 @@ async function load() {
 }
 
 function changePage(n){page=n;load();scrollTo(0,0);}
-async function updStat(id,s,el){try{await window.NIRVAAH.Admin.updateStatus(id,s);showToast('Updated ✅',`<%= __("statusArrow") %> ${s.replace('_',' ')}`,'success');el.value='';load();}catch(e){showToast('Error',e.message,'error');}}
+async function updStat(id,s,el){
+  if(s === 'resolve_redirect') { window.location.href = '/admin/complaint?id=' + id; return; }
+  try{await window.NIRVAAH.Admin.updateStatus(id,s);showToast('Updated ✅',`<%= __("statusArrow") %> ${s.replace('_',' ')}`,'success');el.value='';load();}catch(e){showToast('Error',e.message,'error');el.value='';}
+}
 
 load();
 </script>

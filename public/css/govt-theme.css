@@ -1590,3 +1590,32 @@ tbody tr:hover td {
     padding-top: 0 !important;
   }
 }
+
+/* ── 39. RESPONSIVE DRAWER OVERRIDES ─────────────────────────── */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 9999;
+    margin-top: 0;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.15) !important;
+  }
+  .admin-sidebar.open {
+    transform: translateX(0);
+  }
+  .admin-close-toggle, .admin-nav-toggle {
+    display: block !important;
+  }
+  .admin-main {
+    margin-left: 0 !important;
+    width: 100vw;
+  }
+}
+.admin-close-toggle, .admin-nav-toggle {
+  display: none;
+}

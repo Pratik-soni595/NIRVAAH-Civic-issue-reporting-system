@@ -20,6 +20,15 @@ const protect = (req, res, next) => {
       });
     }
     req.user = user;
+    
+    // Robustly determine role directly from which Mongoose model loaded the user
+    req.accountType = (user.constructor.modelName === 'Admin') ? 'admin' : 'citizen';
+    
+    // Ensure req.user.role exists (using a plain property assignment)
+    // We modify the internal doc to avoid Mongoose stripping it
+    req.user.role = req.accountType;
+    if (req.user._doc) req.user._doc.role = req.accountType;
+    
     next();
   })(req, res, next);
 };
