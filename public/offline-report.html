@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Reporting – NIRVAAH</title>
+
+    <!-- Fonts: Montserrat + Poppins (same as main app) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Leaflet Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/pwa/manifest.json">
+    <meta name="theme-color" content="#7A1C1C">
+
+    <style>
+    /* ── CSS Variables (matching govt-theme.css) ──────────── */
+    :root {
+      --primary: #7A1C1C;
+      --primary-light: #9E2A2B;
+      --primary-dark: #5C1414;
+      --accent: #D4A373;
+      --accent-dark: #B8884F;
+      --accent-light: #EDD5B0;
+      --bg: #F8F1EC;
+      --bg-card: #FFFDF9;
+      --text: #2E2E2E;
+      --text-muted: #6B6057;
+      --border: #DDD0C0;
+      --border-light: #EDE4D8;
+      --shadow-card: 0 4px 18px rgba(90, 30, 20, 0.09);
+      --radius: 10px;
+      --radius-sm: 6px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ── Base Reset ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Montserrat', 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      letter-spacing: 0.01em;
+      min-height: 100vh;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Montserrat', sans-serif;
+      color: var(--primary-dark);
+      line-height: 1.28;
+    }
+
+    /* ── Top Strip ────────────────────────────────────────── */
+    .top-strip {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 42px;
+      background: var(--primary-dark);
+      color: rgba(255, 248, 236, 0.92);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.25rem;
+      font-size: 0.78rem; font-weight: 500; letter-spacing: 0.03em;
+      z-index: 1300;
+      border-bottom: 1px solid rgba(212, 163, 115, 0.3);
+    }
+    .top-strip-left {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-family: 'Montserrat', sans-serif;
+    }
+    .top-strip-right {
+      display: flex; align-items: center; gap: 0.9rem;
+    }
+    .top-strip-right span {
+      color: rgba(255, 255, 255, 0.25); user-select: none;
+    }
+    .skip-link {
+      font-weight: 600; padding: 0.2rem 0.6rem;
+      border: 1px solid rgba(212, 163, 115, 0.4); border-radius: 4px;
+      color: rgba(255, 248, 236, 0.8); text-decoration: none; font-size: 0.76rem;
+    }
+
+    /* ── Main Header ─────────────────────────────────────── */
+    .main-header {
+      position: fixed; top: 42px; left: 0; right: 0;
+      height: 72px;
+      background: #FFFDF9;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 10px rgba(90, 30, 20, 0.07);
+      display: flex; align-items: center;
+      padding: 0 1.25rem;
+      z-index: 1200;
+    }
+    .main-header-inner {
+      max-width: 1240px; width: 100%; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .header-brand {
+      display: flex; align-items: center; gap: 0.85rem;
+      text-decoration: none;
+    }
+    .header-logo-wrap {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, #7A1C1C 0%, #9E2A2B 100%);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 14px rgba(122, 28, 28, 0.3);
+      flex-shrink: 0;
+    }
+    .header-logo-wrap svg { width: 28px; height: 28px; fill: #fff; }
+    .header-title-group { display: flex; flex-direction: column; }
+    .header-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.45rem; font-weight: 800;
+      color: var(--primary); letter-spacing: 0.08em; line-height: 1;
+    }
+    .header-subtitle {
+      font-size: 0.72rem; color: var(--text-muted);
+      font-weight: 500; letter-spacing: 0.03em; margin-top: 0.15rem;
+    }
+    .header-actions { display: flex; align-items: center; gap: 0.75rem; }
+
+    /* ── Offline Status Badge ────────────────────────────── */
+    .offline-badge {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      background: #fff4dc; color: #7a5404;
+      border: 1px solid #e2c889; border-radius: 6px;
+      padding: 0.4rem 0.9rem; font-size: 0.8rem; font-weight: 700;
+    }
+    .offline-badge-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #d97706; animation: pulse-dot 1.8s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Navbar ───────────────────────────────────────────── */
+    .navbar {
+      position: fixed; top: 114px; left: 0; right: 0;
+      height: 52px;
+      background: linear-gradient(135deg, #7A1C1C 0%, #9E2A2B 100%);
+      border-bottom: 3px solid var(--accent);
+      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.15);
+      padding: 0 1.25rem;
+      z-index: 1100;
+      display: flex; align-items: center;
+    }
+    .navbar-inner {
+      max-width: 1240px; width: 100%; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-links {
+      display: flex; align-items: center; gap: 0;
+      list-style: none; flex: 1;
+    }
+    .nav-links li { list-style: none; }
+    .nav-links a {
+      color: rgba(255, 248, 236, 0.9); padding: 0.6rem 0.95rem;
+      border-radius: 5px; font-size: 0.88rem; font-weight: 600;
+      display: flex; align-items: center; gap: 0.4rem;
+      white-space: nowrap; text-decoration: none;
+      transition: background 0.18s, color 0.18s;
+    }
+    .nav-links a:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+    .nav-links a.active {
+      background: rgba(255, 255, 255, 0.15); color: #fff;
+      position: relative;
+    }
+    .nav-links a.active::after {
+      content: ''; position: absolute;
+      left: 0.75rem; right: 0.75rem; bottom: 0.2rem;
+      height: 2px; background: var(--accent); border-radius: 999px;
+    }
+    .nav-icon { font-size: 0.85rem; opacity: 0.85; }
+
+    /* ── Page Layout ─────────────────────────────────────── */
+    .page-wrapper {
+      padding-top: 185px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px; margin: 0 auto;
+      padding: 0 1.25rem 3rem;
+    }
+
+    /* ── Govt Card ────────────────────────────────────────── */
+    .govt-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      padding: 1.5rem;
+    }
+
+    /* ── Offline Alert ────────────────────────────────────── */
+    .govt-alert {
+      border-left: 4px solid var(--accent);
+      margin-bottom: 1.5rem;
+    }
+    .govt-alert h5 {
+      font-size: 1rem; font-weight: 700;
+      color: var(--primary-dark); margin-bottom: 0.35rem;
+    }
+    .govt-alert p {
+      color: var(--text-muted); font-size: 0.92rem;
+      margin: 0; line-height: 1.6;
+    }
+
+    /* ── Form Card ────────────────────────────────────────── */
+    .form-card { padding: 2rem; }
+    .form-card h2 {
+      font-size: 1.35rem; font-weight: 800;
+      margin-bottom: 1.5rem; color: var(--primary-dark);
+    }
+
+    /* ── Form Elements ────────────────────────────────────── */
+    .form-group { margin-bottom: 1rem; }
+    .form-label {
+      display: block; font-size: 0.84rem; font-weight: 700;
+      color: var(--primary-dark); letter-spacing: 0.06em;
+      margin-bottom: 0.45rem;
+    }
+    .form-control {
+      width: 100%; background: #fffdf9;
+      color: var(--text); border: 1px solid #d8ccb8;
+      border-radius: 6px; padding: 0.82rem 0.95rem;
+      font-family: inherit; font-size: 0.95rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-control::placeholder { color: #9b8e80; }
+    .form-control:focus {
+      outline: none; border-color: var(--accent);
+      background: #fffefb;
+      box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.18);
+    }
+    textarea.form-control { resize: vertical; min-height: 80px; }
+    select.form-control {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236B6057' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.95rem center;
+      padding-right: 2.5rem;
+    }
+
+    /* ── Category Grid ────────────────────────────────────── */
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+    }
+    .category-chip {
+      background: #fff;
+      border: 1px solid #e0cfc2;
+      padding: 0.55rem 0.5rem;
+      text-align: center;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .category-chip:hover {
+      background: #f9f2ec;
+      border-color: var(--accent);
+    }
+
+    /* Active state is set via JS — we override .category-chip inline styles here */
+
+    /* ── Buttons ──────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 0.4rem;
+      border: none; border-radius: 6px;
+      font-family: inherit; font-weight: 700;
+      font-size: 0.95rem; cursor: pointer;
+      padding: 0.75rem 1.5rem; letter-spacing: 0.01em;
+      transition: var(--transition); text-decoration: none;
+    }
+    .govt-btn-primary {
+      background: var(--primary);
+      color: #fffdf8;
+      border: 1px solid var(--primary-dark);
+    }
+    .govt-btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(90, 20, 20, 0.2);
+    }
+    .govt-btn-outline {
+      background: #fffaf2;
+      color: var(--primary);
+      border: 1px solid var(--border);
+    }
+    .govt-btn-outline:hover {
+      background: #f5ece0;
+      color: var(--primary-dark);
+      border-color: var(--accent);
+    }
+    .btn-block { width: 100%; }
+    .btn-sm { padding: 0.5rem 1rem; font-size: 0.85rem; }
+
+    /* ── Dropzone ─────────────────────────────────────────── */
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      background: #fdf8f3;
+      padding: 1.75rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      color: var(--text-muted);
+    }
+    .dropzone:hover {
+      border-color: var(--accent);
+      background: #faf2e8;
+    }
+    .dropzone-icon {
+      display: block; margin-bottom: 0.5rem;
+    }
+    .dropzone-icon svg {
+      width: 32px; height: 32px; color: var(--accent-dark);
+    }
+    .dropzone-hint {
+      font-size: 0.82rem; color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* ── Map Container ────────────────────────────────────── */
+    .map-wrapper {
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    /* ── Preview Grid ─────────────────────────────────────── */
+    .preview-grid {
+      display: flex; gap: 0.5rem;
+      overflow-x: auto; margin-top: 0.5rem;
+    }
+
+    /* ── Location Row ─────────────────────────────────────── */
+    .location-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    /* ── Step Navigation ──────────────────────────────────── */
+    .step-nav {
+      display: flex; justify-content: space-between;
+      align-items: center; gap: 1rem;
+      margin-top: 1rem;
+    }
+    .step-nav-end {
+      display: flex; justify-content: flex-end;
+      margin-top: 1rem;
+    }
+
+    /* ── Submit Block ─────────────────────────────────────── */
+    .submit-block {
+      display: flex; flex-direction: column;
+      gap: 0.75rem; margin-top: 1.5rem;
+    }
+    .submit-block .govt-btn-primary {
+      padding: 1rem 1.5rem; font-size: 1.05rem;
+    }
+
+    /* ── Error Messages ───────────────────────────────────── */
+    .form-error {
+      color: #991b1b; font-size: 0.82rem;
+      margin-top: 0.35rem;
+    }
+
+    /* ── Toast Container ──────────────────────────────────── */
+    .toast-container {
+      position: fixed; bottom: 20px; right: 20px;
+      z-index: 9999;
+    }
+    .toast {
+      padding: 0.85rem 1.15rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.6rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      font-size: 0.9rem;
+      color: #fff;
+      animation: slideInToast 0.3s ease;
+    }
+    .toast.toast-success { background: #2c6e49; }
+    .toast.toast-error { background: #991b1b; }
+    .toast.toast-info { background: var(--primary); }
+    @keyframes slideInToast {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* ── Utility ──────────────────────────────────────────── */
+    .hidden { display: none !important; }
+    .mt-2 { margin-top: 0.5rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mb-3 { margin-bottom: 0.75rem; }
+    .mb-4 { margin-bottom: 1rem; }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .top-strip { font-size: 0.7rem; padding: 0 0.75rem; }
+      .top-strip-left .strip-text { display: none; }
+      .main-header { padding: 0 0.75rem; }
+      .header-title { font-size: 1.15rem; }
+      .nav-links { display: none; }
+      .page-wrapper { padding-top: 170px; }
+      .container { padding: 0 1rem 2rem; }
+      .form-card { padding: 1.25rem; }
+      .location-row { grid-template-columns: 1fr; }
+      .category-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+    }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     TOP STRIP — Government identifier bar
+════════════════════════════════════════════════════════ -->
+<div class="top-strip">
+  <div class="top-strip-left">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+      style="width:20px;height:20px;fill:#D4A373">
+      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <circle cx="12" cy="12" r="3" fill="currentColor"/>
+      <line x1="12" y1="2" x2="12" y2="7" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="12" y1="17" x2="12" y2="22" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="2" y1="12" x2="7" y2="12" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="17" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="4.93" y1="4.93" x2="8.46" y2="8.46" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="15.54" y1="15.54" x2="19.07" y2="19.07" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="19.07" y1="4.93" x2="15.54" y2="8.46" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="8.46" y1="15.54" x2="4.93" y2="19.07" stroke="currentColor" stroke-width="1.2"/>
+    </svg>
+    <span class="strip-text">Government of India &mdash; Digital Citizen Services Portal</span>
+  </div>
+  <div class="top-strip-right">
+    <a href="#main-content" class="skip-link">Skip to Content</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MAIN HEADER — Brand + Offline Badge
+════════════════════════════════════════════════════════ -->
+<header class="main-header">
+  <div class="main-header-inner">
+    <a href="/" class="header-brand" aria-label="NIRVAAH Home">
+      <div class="header-logo-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" style="width:26px;height:26px">
+          <path d="M12 3v18M5 7l7-4 7 4M5 7l3 8a4 4 0 0 0 8 0l3-8M3 20h18" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="header-title-group">
+        <span class="header-title">NIRVAAH</span>
+        <span class="header-subtitle">Citizen Issue Reporting System</span>
+      </div>
+    </a>
+    <div class="header-actions">
+      <div class="offline-badge">
+        <span class="offline-badge-dot"></span>
+        Offline Mode
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════
+     NAVIGATION BAR
+════════════════════════════════════════════════════════ -->
+<nav class="navbar" aria-label="Primary navigation">
+  <div class="navbar-inner">
+    <ul class="nav-links">
+      <li><a href="/"><span class="nav-icon">&#9632;</span> Home</a></li>
+      <li><a href="/dashboard"><span class="nav-icon">&#9632;</span> Dashboard</a></li>
+      <li><a href="/report" class="active"><span class="nav-icon">&#9632;</span> Report Issue</a></li>
+      <li><a href="/my-complaints"><span class="nav-icon">&#9632;</span> Track</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════
+     PAGE CONTENT
+════════════════════════════════════════════════════════ -->
+<div class="page-wrapper">
+  <div class="container">
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Offline Alert -->
+    <div class="govt-card govt-alert">
+      <h5>You are currently disconnected</h5>
+      <p>Your report will be saved locally on your device and submitted automatically when your internet connection is restored.</p>
+    </div>
+
+    <!-- Report Form -->
+    <form id="reportForm" class="govt-card form-card">
+      <h2>Draft Offline Report</h2>
+
+      <!-- Step 1: Category -->
+      <div id="step1">
+        <div class="form-group mb-4">
+          <label class="form-label">Issue Category</label>
+          <div class="category-grid">
+            <div class="category-chip" data-cat="pothole" onclick="selectCat('pothole')">Pothole</div>
+            <div class="category-chip" data-cat="garbage" onclick="selectCat('garbage')">Garbage</div>
+            <div class="category-chip" data-cat="water_leakage" onclick="selectCat('water_leakage')">Water Leak</div>
+            <div class="category-chip" data-cat="electricity" onclick="selectCat('electricity')">Electricity</div>
+            <div class="category-chip" data-cat="road_damage" onclick="selectCat('road_damage')">Road Damage</div>
+            <div class="category-chip" data-cat="street_light" onclick="selectCat('street_light')">Street Light</div>
+            <div class="category-chip" data-cat="tree_hazard" onclick="selectCat('tree_hazard')">Tree Hazard</div>
+            <div class="category-chip" data-cat="sewage" onclick="selectCat('sewage')">Sewage</div>
+            <div class="category-chip" data-cat="graffiti" onclick="selectCat('graffiti')">Graffiti</div>
+            <div class="category-chip" data-cat="other" onclick="selectCat('other')">Other</div>
+          </div>
+          <!-- Native Fallback Select (Hidden visually) -->
+          <select id="category" class="hidden">
+            <option value="pothole">Pothole</option><option value="garbage">Garbage</option>
+            <option value="water_leakage">Water Leak</option><option value="electricity">Electricity</option>
+            <option value="road_damage">Road Damage</option><option value="street_light">Street Light</option>
+            <option value="tree_hazard">Tree Hazard</option><option value="sewage">Sewage</option>
+            <option value="graffiti">Graffiti</option><option value="other">Other</option>
+          </select>
+          <div id="catErr" class="form-error hidden mt-2">Select a category.</div>
+        </div>
+
+        <div class="step-nav-end">
+          <button type="button" class="btn govt-btn-primary" onclick="goStep(2)">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Content -->
+      <div id="step2" class="hidden">
+        <div class="form-group mb-3">
+          <label class="form-label">Issue Title</label>
+          <input type="text" id="title" class="form-control" placeholder="e.g. Large Pothole on Main Street" required>
+        </div>
+
+        <div class="form-group mb-3">
+          <label class="form-label">Photos (Optional)</label>
+          <div class="dropzone" id="dropzone" onclick="document.getElementById('images').click()">
+            <span class="dropzone-icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </span>
+            Tap to attach offline photos
+            <span class="dropzone-hint">Max 5 images</span>
+          </div>
+          <input type="file" id="images" class="hidden" accept="image/*" multiple onchange="handleImages(this.files)" style="display:none;">
+          <div id="previewGrid" class="preview-grid"></div>
+        </div>
+
+        <div class="form-group mb-3">
+          <label class="form-label">Description</label>
+          <textarea id="description" class="form-control" rows="3" placeholder="Provide any useful details..." required></textarea>
+        </div>
+
+        <div class="form-group mb-4">
+          <label class="form-label">Priority</label>
+          <select id="priority" class="form-control">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <div class="step-nav">
+          <button type="button" class="btn govt-btn-outline" onclick="goStep(1)">Back</button>
+          <button type="button" class="btn govt-btn-primary" onclick="goStep(3)">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Location & Submit -->
+      <div id="step3" class="hidden">
+        <div class="form-group mb-3">
+          <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
+            Pin Location
+            <button type="button" class="btn btn-sm govt-btn-outline" onclick="autoLocation()">Use GPS</button>
+          </label>
+          <div class="map-wrapper">
+            <div id="map" style="height:250px; z-index:1;"></div>
+          </div>
+          <div id="locErr" class="form-error hidden mt-2">Please select a location on the map.</div>
+        </div>
+
+        <div class="location-row mb-4">
+          <div class="form-group">
+            <label class="form-label">Address / Area</label>
+            <input type="text" id="address" class="form-control" placeholder="Street Name...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Landmark</label>
+            <input type="text" id="landmark" class="form-control" placeholder="Near...">
+          </div>
+        </div>
+
+        <input type="hidden" id="lat">
+        <input type="hidden" id="lng">
+
+        <div class="submit-block">
+          <button type="button" class="btn govt-btn-primary btn-block" onclick="saveOffline()">
+            Queue Offline Submission
+          </button>
+          <button type="button" class="btn govt-btn-outline btn-block" onclick="goStep(2)">Go Back and Edit</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/js/indexeddb.js"></script>
+
+<script>
+// Mock auth so offline interface allows queueing
+window.NIRVAAH = { Auth: { isLoggedIn: () => true }, getUser: () => ({ name: 'Offline Citizen', id: '0' }) };
+
+// Simple Toast Reimplementation
+function showToast(title, msg, type = 'info') {
+    const tc = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast toast-${type === 'success'?'success':(type==='error'?'error':'info')}`;
+    t.innerHTML = `<strong>${title}</strong><br><small>${msg}</small>`;
+    tc.appendChild(t);
+    setTimeout(() => t.remove(), 4500);
+}
+
+// Map Logic
+let step = 1, selCat = '', files = [], map, marker;
+
+function selectCat(cat) {
+  selCat = cat; document.getElementById('category').value = cat;
+  document.querySelectorAll('.category-chip').forEach(c => {
+      c.style.background = '#fff'; c.style.color = '#6B6057'; c.style.border = '1px solid #e0cfc2';
+      if(c.dataset.cat === cat) { c.style.background = '#7A1C1C'; c.style.color = '#fff'; c.style.border = '1px solid #5C1414'; }
+  });
+  document.getElementById('catErr').classList.add('hidden');
+}
+
+function handleImages(f) {
+  files = [...files, ...Array.from(f)].slice(0, 5);
+  document.getElementById('previewGrid').innerHTML = files.map((f,i) => 
+    `<div style="position:relative;width:60px;height:60px;flex-shrink:0"><img src="${URL.createObjectURL(f)}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;border:1px solid #DDD0C0;"><div style="position:absolute;top:-5px;right:-5px;background:#991b1b;color:white;width:18px;height:18px;border-radius:50%;text-align:center;line-height:18px;cursor:pointer;font-size:10px;" onclick="files.splice(${i},1);handleImages(new DataTransfer().files)">x</div></div>`
+  ).join('');
+}
+
+function goStep(n) {
+  if (n > step) {
+    if (step === 1 && !selCat) { document.getElementById('catErr').classList.remove('hidden'); return; }
+    if (step === 2 && !document.getElementById('title').value.trim()) { alert('Please enter a title.'); return; }
+  }
+  document.getElementById('step1').classList.add('hidden');
+  document.getElementById('step2').classList.add('hidden');
+  document.getElementById('step3').classList.add('hidden');
+  document.getElementById(`step${n}`).classList.remove('hidden');
+  step = n;
+  if (n === 3 && !map) {
+      setTimeout(() => {
+        map = L.map('map').setView([20.5937, 78.9629], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        map.on('click', e => setLocation(e.latlng.lat, e.latlng.lng));
+      }, 200);
+  }
+}
+
+function setLocation(lat, lng) {
+  document.getElementById('lat').value = lat; document.getElementById('lng').value = lng;
+  document.getElementById('locErr').classList.add('hidden');
+  if (!marker) marker = L.marker([lat, lng]).addTo(map);
+  else marker.setLatLng([lat, lng]);
+  map.setView([lat, lng], 16);
+}
+
+function autoLocation() {
+  navigator.geolocation.getCurrentPosition(
+    p => setLocation(p.coords.latitude, p.coords.longitude),
+    () => alert('Could not get GPS location. Tap on the map offline.')
+  );
+}
+
+// Core Offline Save Hook Triggered!
+async function saveOffline() {
+  const lat = document.getElementById('lat').value; 
+  if (!lat) { document.getElementById('locErr').classList.remove('hidden'); return; }
+  
+  try {
+      if(!window.NirvaahDB) throw new Error("IndexedDB core script failed to load offline.");
+      
+      const token = localStorage.getItem('nirvaah_token');
+      await (typeof globalThis !== 'undefined' ? globalThis : self).NirvaahDB.queueComplaint({ 
+        title: document.getElementById('title').value, 
+        description: document.getElementById('description').value, 
+        category: selCat, 
+        priority: document.getElementById('priority').value, 
+        lat, 
+        lng: document.getElementById('lng').value, 
+        address: document.getElementById('address').value,
+        images: files
+      }, token);
+      
+      if ('serviceWorker' in navigator && 'SyncManager' in window) { 
+          const r = await navigator.serviceWorker.ready; 
+          await r.sync.register('sync-pending-complaints'); 
+      }
+      
+      showToast('Saved Offline', 'Your report is queued locally.', 'success');
+      setTimeout(() => {
+          document.getElementById('reportForm').reset();
+          files = []; handleImages(new DataTransfer().files);
+          goStep(1);
+          showToast('Ready', 'You can draft another offline report.', 'info');
+      }, 2500);
+      
+  } catch(e) {
+      showToast('Error', e.message, 'error');
+  }
+}
+</script>
+
+</body>
+</html>
