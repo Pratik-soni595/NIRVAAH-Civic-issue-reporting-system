@@ -102,6 +102,7 @@ exports.register = async (req, res, next) => {
         name,
         email,
         password,
+        wardNo: Number(wardNo),
         isActive: true,
       });
     } else {
