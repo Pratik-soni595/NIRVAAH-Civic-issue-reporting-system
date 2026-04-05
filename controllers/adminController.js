@@ -14,6 +14,7 @@ exports.getAllComplaints = async (req, res, next) => {
     const {
       category,
       status,
+      priority,
       search,
       page = 1,
       limit = 20,
@@ -24,6 +25,7 @@ exports.getAllComplaints = async (req, res, next) => {
     const query = {};
     if (category) query.category = category;
     if (status) query.status = status;
+    if (priority) query.priority = priority;
     if (search) query.title = { $regex: search, $options: "i" };
 
     const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
