@@ -11,9 +11,6 @@
         <h1>Priority Module</h1>
         <p class="text-muted">Vote-based workflow, deadline tracking, and escalation management.</p>
       </div>
-      <div class="priority-header-actions">
-        <button id="pm-escalate" class="priority-btn priority-btn-outline" type="button">Run Escalation</button>
-      </div>
     </div>
 
     <div class="filter-bar priority-filter-bar">
@@ -354,29 +351,8 @@ async function updateStage(complaintId) {
   }
 }
 
-async function runEscalationJob() {
-  const button = document.getElementById('pm-escalate');
-  const originalText = button.textContent;
-  button.disabled = true;
-  button.textContent = 'Running...';
-
-  try {
-    const response = await window.NIRVAAH.AdminPriority.runEscalation();
-    const count = response?.escalatedCount ?? 0;
-    showToast('Escalation complete', `${count} complaint${count === 1 ? '' : 's'} escalated.`, 'success');
-    await loadComplaints({ silent: true });
-  } catch (error) {
-    console.error('Error running escalation:', error);
-    showToast('Error', error.message || 'Escalation failed.', 'error');
-  } finally {
-    button.disabled = false;
-    button.textContent = originalText;
-  }
-}
-
 function bindEvents() {
   document.getElementById('pm-filter').addEventListener('click', () => loadComplaints());
-  document.getElementById('pm-escalate').addEventListener('click', runEscalationJob);
   document.getElementById('statusForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!pmState.currentComplaintId) return;
