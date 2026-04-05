@@ -114,12 +114,6 @@ router.get("/admin/priority-dashboard", (req, res) =>
     navPage: "priority-dashboard",
   }),
 );
-router.get("/admin/priority-module", (req, res) =>
-  res.render("admin/priority-module", {
-    title: "Priority Module – NIRVAAH",
-    navPage: "priority-module",
-  }),
-);
 router.get("/admin/map", (req, res) =>
   res.render("admin/map", {
     title: "Admin Live Map – NIRVAAH",

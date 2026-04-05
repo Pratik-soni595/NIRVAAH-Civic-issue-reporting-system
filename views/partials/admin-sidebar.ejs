@@ -1,14 +1,34 @@
 <!-- ADMIN SIDEBAR -->
 <div class="admin-sidebar" id="adminSidebar">
-  <div class="admin-sidebar-brand" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-    <div style="display: flex; align-items: center; gap: 0.75rem;">
+  <div
+    class="admin-sidebar-brand"
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    "
+  >
+    <div style="display: flex; align-items: center; gap: 0.75rem">
       <div class="admin-sidebar-badge">N</div>
       <div class="admin-sidebar-title">NIRVAAH Admin</div>
     </div>
-    <button class="nav-toggle admin-close-toggle" onclick="document.getElementById('adminSidebar').classList.remove('open')" aria-label="Close Navigation" style="color: var(--text); padding: 0.25rem;">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="18" y1="6" x2="6" y2="18"/>
-        <line x1="6" y1="6" x2="18" y2="18"/>
+    <button
+      class="nav-toggle admin-close-toggle"
+      onclick="document.getElementById('adminSidebar').classList.remove('open')"
+      aria-label="Close Navigation"
+      style="color: var(--text); padding: 0.25rem"
+    >
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+      >
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
       </svg>
     </button>
   </div>
@@ -48,14 +68,6 @@
           class="<%= navPage==='admin-complaints'?'active':'' %>"
         >
           <span><%= __('sidebarAllComplaints') %></span>
-        </a>
-      </li>
-      <li>
-        <a
-          href="/admin/priority-module"
-          class="<%= navPage==='priority-module'?'active':'' %>"
-        >
-          <span>Priority Module</span>
         </a>
       </li>
     </ul>
