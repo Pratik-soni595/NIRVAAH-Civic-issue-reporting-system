@@ -29,6 +29,7 @@ const {
   reviewResolution,
   getPublicResolution,
 } = require('../controllers/resolutionController');
+const { submitFeedback, getFeedback } = require('../controllers/feedbackController');
 const { protect } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/admin');
 const upload = require('../middleware/upload');
@@ -42,6 +43,10 @@ router.post('/', protect, upload.array('images', 5), createComplaint);
 router.get('/:id', getComplaintById);
 router.post('/:id/vote', protect, voteComplaint);
 router.delete('/:id', protect, deleteComplaint);
+
+// ── Citizen feedback routes ───────────────────────────────────────────────
+router.get('/:id/feedback', protect, getFeedback);
+router.post('/:id/feedback', protect, submitFeedback);
 
 // ── TRS routes ────────────────────────────────────────────────────────────
 // Public: citizen reads published resolution evidence (no auth)

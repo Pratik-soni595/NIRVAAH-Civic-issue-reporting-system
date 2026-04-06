@@ -93,6 +93,7 @@ exports.updateComplaintStatus = async (req, res, next) => {
     // deduct user points and clear resolved state
     if (prevStatus === "resolved" && status !== "resolved") {
       complaint.resolvedAt = null;
+      complaint.resolutionFeedback = undefined;
       await User.findByIdAndUpdate(complaint.user, {
         $inc: { resolvedCount: -1, points: -25 },
       });

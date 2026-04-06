@@ -157,6 +157,10 @@ async function load() {
       initTRS(c);
     }
 
+    if (c.status === 'resolved') {
+      loadCitizenFeedback();
+    }
+
   } catch(err) {
     document.getElementById('loadingState').innerHTML =
       `<div class="empty-state" style="margin:0 auto"><div class="empty-icon">❌</div><div class="empty-title">Could not load complaint</div><a href="/admin/complaints" class="btn btn-primary mt-3">Back to list</a></div>`;
@@ -223,6 +227,9 @@ function buildComplaintHTML(c, isResolved, hasEvidence) {
             : '<div id="trsCapturePanel"></div>'
           }
         </div>
+        
+        <!-- Citizen Feedback Panel -->
+        <div id="citizenFeedbackPanel"></div>
 
         ${c.statusHistory?.length?`<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.25rem;margin-top:1.25rem">
           <h4 style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:1rem">Status Timeline</h4>
@@ -547,6 +554,42 @@ async function deleteComplaint(cid) {
     setTimeout(() => { window.location.href = '/admin/complaints'; }, 1000);
   } catch(e) {
     showToast('Error', e.message, 'error');
+  }
+}
+
+// ── Citizen Feedback logic ───────────────────────────────────────────────────
+const escapeHTML = (str) => String(str||'').replace(/[&<>'"]/g, tag => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+}[tag] || tag));
+
+async function loadCitizenFeedback() {
+  try {
+    const res = await window.NIRVAAH.Complaints.getFeedback(id);
+    if (res && res.success && res.feedback) {
+      const fb = res.feedback;
+      const panelDiv = document.getElementById('citizenFeedbackPanel');
+      if (panelDiv) {
+        panelDiv.innerHTML = `
+          <div class="trs-panel" style="margin-top:1.5rem; background:#FFFDF9;">
+            <div class="trs-panel-title">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.514"></path></svg>
+              Citizen Feedback
+            </div>
+            
+            <div class="evidence-row"><span class="evidence-label">Date Submitted</span><span class="evidence-val">${new Date(fb.submittedAt).toLocaleString('en-IN')}</span></div>
+            <div class="evidence-row"><span class="evidence-label">Rating</span><span class="evidence-val" style="color:#D4A373;letter-spacing:1px">${'★'.repeat(fb.rating)}${'☆'.repeat(5 - fb.rating)}</span></div>
+            <div class="evidence-row"><span class="evidence-label">Satisfied?</span><span class="evidence-val">${fb.isSatisfied ? 'Yes' : 'No'}</span></div>
+            ${fb.comment ? `<div class="mt-2 text-sm" style="border-top:1px solid var(--border-light); padding-top:8px;"><strong>Comment: </strong>${escapeHTML(fb.comment)}</div>` : ''}
+          </div>
+        `;
+      }
+    }
+  } catch(e) {
+    if (e.status === 404) {
+      // Feedback not left by citizen yet. It's fine to stay quiet.
+    } else {
+      console.warn('Could not fetch citizen feedback', e);
+    }
   }
 }
 

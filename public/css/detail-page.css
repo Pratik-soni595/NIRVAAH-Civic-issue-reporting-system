@@ -579,3 +579,140 @@
     height: 170px;
   }
 }
+
+/* ── CITIZEN FEEDBACK CARD ────────────────────────────── */
+.detail-feedback-card {
+  margin-top: 20px;
+  padding: 16px;
+  background: #FFFDF9;
+  border: 1px solid #EDE4D8;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(90,30,20,.05);
+}
+
+.detail-feedback-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #7A1C1C;
+  margin-bottom: 6px;
+}
+
+.detail-feedback-subtitle {
+  font-size: 0.75rem;
+  color: #6B6057;
+  margin-bottom: 12px;
+}
+
+.detail-feedback-group {
+  margin-bottom: 12px;
+}
+
+.detail-feedback-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #2E2E2E;
+  margin-bottom: 6px;
+}
+
+.detail-feedback-stars {
+  display: flex;
+  gap: 4px;
+}
+
+.detail-feedback-star {
+  font-size: 1.5rem;
+  color: #DDD0C0;
+  cursor: pointer;
+  transition: color 0.2s;
+  line-height: 1;
+}
+
+.detail-feedback-star.selected {
+  color: #D4A373;
+}
+
+.detail-feedback-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #DDD0C0;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  resize: vertical;
+  background: #fff;
+  color: #2E2E2E;
+}
+
+.detail-feedback-input:focus {
+  outline: none;
+  border-color: #7A1C1C;
+}
+
+.detail-feedback-toggle {
+  display: flex;
+  gap: 12px;
+}
+
+.detail-feedback-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #2E2E2E;
+  cursor: pointer;
+}
+
+.detail-feedback-submit {
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(135deg, #7A1C1C, #9E2A2B);
+  color: #FFFDF9;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.detail-feedback-submit:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6A1818, #8A2323);
+}
+
+.detail-feedback-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.detail-feedback-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  padding: 4px 0;
+  border-bottom: 1px solid #EDE4D8;
+}
+
+.detail-feedback-summary-row:last-child {
+  border-bottom: none;
+}
+
+.detail-feedback-summary-lbl {
+  color: #6B6057;
+}
+
+.detail-feedback-summary-val {
+  font-weight: 600;
+  color: #2E2E2E;
+  text-align: right;
+  max-width: 65%;
+  word-wrap: break-word;
+}
+
+.detail-feedback-rating-display {
+  color: #D4A373;
+  letter-spacing: 2px;
+}

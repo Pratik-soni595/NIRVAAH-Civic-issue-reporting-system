@@ -118,28 +118,40 @@ const complaintSchema = new mongoose.Schema(
     adminNote: String,
 
     // ─────────────────────────────────────────────────────
+    // CITIZEN RESOLUTION FEEDBACK
+    // ─────────────────────────────────────────────────────
+    resolutionFeedback: {
+      rating: { type: Number, min: 1, max: 5, default: null },
+      comment: { type: String, maxlength: 500, default: null },
+      isSatisfied: { type: Boolean, default: null },
+      submittedAt: { type: Date, default: null },
+      updatedAt: { type: Date, default: null },
+      submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }
+    },
+
+    // ─────────────────────────────────────────────────────
     // TRANSPARENT RESOLUTION SYSTEM (TRS) — WRITE-ONCE
     // Once submittedAt is set this sub-document is immutable.
     // ─────────────────────────────────────────────────────
     resolutionEvidence: {
       // Cloudinary-hosted resolution photo
-      imageUrl:      { type: String, default: null },
+      imageUrl: { type: String, default: null },
       imagePublicId: { type: String, default: null },
-      imageHash:     { type: String, default: null }, // SHA-256 hex
+      imageHash: { type: String, default: null }, // SHA-256 hex
 
       // Server-injected timestamp — any client-provided value is discarded
-      submittedAt:   { type: Date, default: null },
+      submittedAt: { type: Date, default: null },
 
       // GPS at moment of capture (client-provided, server-validated)
       captureLocation: {
-        lat:       { type: Number, default: null },
-        lng:       { type: Number, default: null },
+        lat: { type: Number, default: null },
+        lng: { type: Number, default: null },
         accuracyM: { type: Number, default: null },
       },
 
       // Haversine validation result
       distanceFromOriginM: { type: Number, default: null },
-      isSuspicious:        { type: Boolean, default: false },
+      isSuspicious: { type: Boolean, default: false },
       suspicionReason: {
         type: String,
         enum: ["DISTANCE_EXCEEDED", "NO_ORIGIN_COORDINATES", "LOW_ACCURACY", null],
@@ -150,15 +162,15 @@ const complaintSchema = new mongoose.Schema(
       supervisorReview: {
         reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", default: null },
         reviewedAt: { type: Date, default: null },
-        decision:   { type: String, enum: ["approved", "rejected", null], default: null },
-        notes:      { type: String, default: null },
+        decision: { type: String, enum: ["approved", "rejected", null], default: null },
+        notes: { type: String, default: null },
       },
 
       // Audit trail fields
-      submittedBy:   { type: mongoose.Schema.Types.ObjectId, ref: "Admin", default: null },
+      submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", default: null },
       submitterRole: { type: String, default: null },
-      userAgent:     { type: String, default: null },
-      notes:         { type: String, default: null },
+      userAgent: { type: String, default: null },
+      notes: { type: String, default: null },
     },
   },
   {

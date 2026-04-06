@@ -178,6 +178,17 @@ const Complaints = {
   async delete(id) {
     return apiFetch(`/complaints/${id}`, { method: "DELETE" });
   },
+
+  async getFeedback(id) {
+    return apiFetch(`/complaints/${id}/feedback`);
+  },
+
+  async submitFeedback(id, payload) {
+    return apiFetch(`/complaints/${id}/feedback`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
 };
 
 // ============================================================

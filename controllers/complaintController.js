@@ -269,6 +269,7 @@ exports.getMyComplaints = async (req, res, next) => {
 exports.getComplaintById = async (req, res, next) => {
   try {
     const complaint = await Complaint.findById(req.params.id)
+      .select("-resolutionFeedback")
       .populate("user", "name email avatar")
       .populate("statusHistory.changedBy", "name")
       .populate("duplicateOf", "title status");

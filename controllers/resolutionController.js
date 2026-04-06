@@ -15,16 +15,16 @@
  *   Public (no-auth) read of resolution evidence — precise coords stripped.
  */
 
-const crypto  = require("crypto");
+const crypto = require("crypto");
 const Complaint = require("../models/Complaint");
-const User      = require("../models/User");
+const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
 const { haversineDistanceMeters, isWithinIndia } = require("../utils/haversine");
 const { createNotification } = require("./notificationController");
 
 // ─── Thresholds (tunable via env) ───────────────────────────────────────────
 const SUSPICIOUS_DISTANCE_M = parseInt(process.env.TRS_DISTANCE_THRESHOLD_M) || 100;
-const MAX_GPS_ACCURACY_M    = parseInt(process.env.TRS_GPS_ACCURACY_MAX_M)   || 100;
+const MAX_GPS_ACCURACY_M = parseInt(process.env.TRS_GPS_ACCURACY_MAX_M) || 100;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function sha256(buffer) {
@@ -58,10 +58,10 @@ exports.submitResolution = async (req, res, next) => {
     }
 
     // ── 2. Required fields ──────────────────────────────────────────────────
-    const lat        = parseFloat(req.body.latitude);
-    const lng        = parseFloat(req.body.longitude);
-    const accuracyM  = parseFloat(req.body.gpsAccuracyM);
-    const notes      = (req.body.notes || "").trim().slice(0, 500);
+    const lat = parseFloat(req.body.latitude);
+    const lng = parseFloat(req.body.longitude);
+    const accuracyM = parseFloat(req.body.gpsAccuracyM);
+    const notes = (req.body.notes || "").trim().slice(0, 500);
 
     if (isNaN(lat) || isNaN(lng)) {
       return res.status(400).json({
@@ -123,26 +123,26 @@ exports.submitResolution = async (req, res, next) => {
     // ── 7. SHA-256 hash of the uploaded image buffer ────────────────────────
     //    req.file.buffer exists when using multer memoryStorage.
     //    When using CloudinaryStorage the file is streamed; we hash the path/url instead.
-    const imageUrl      = req.file.path;           // Cloudinary secure URL
+    const imageUrl = req.file.path;           // Cloudinary secure URL
     const imagePublicId = req.file.filename;       // Cloudinary public_id
-    const imageHash     = sha256(imageUrl + imagePublicId); // deterministic proxy hash
+    const imageHash = sha256(imageUrl + imagePublicId); // deterministic proxy hash
 
     // ── 8. Haversine distance validation ────────────────────────────────────
     let distanceFromOriginM = null;
-    let isSuspicious        = false;
-    let suspicionReason     = null;
+    let isSuspicious = false;
+    let suspicionReason = null;
 
     const [originLng, originLat] = complaint.location?.coordinates || [];
 
     if (originLat != null && originLng != null) {
       distanceFromOriginM = haversineDistanceMeters(originLat, originLng, lat, lng);
       if (distanceFromOriginM > SUSPICIOUS_DISTANCE_M) {
-        isSuspicious   = true;
+        isSuspicious = true;
         suspicionReason = "DISTANCE_EXCEEDED";
       }
     } else {
       // No origin coordinates on the complaint — flag suspicious
-      isSuspicious   = true;
+      isSuspicious = true;
       suspicionReason = "NO_ORIGIN_COORDINATES";
     }
 
@@ -155,7 +155,7 @@ exports.submitResolution = async (req, res, next) => {
     const result = await Complaint.updateOne(
       {
         _id: id,
-        "resolutionEvidence.submittedAt": { $exists: false }, // atomic immutability guard
+        "resolutionEvidence.submittedAt": null, // atomic immutability guard
       },
       {
         $set: {
@@ -172,9 +172,9 @@ exports.submitResolution = async (req, res, next) => {
             isSuspicious,
             suspicionReason,
             supervisorReview: { reviewedBy: null, reviewedAt: null, decision: null, notes: null },
-            submittedBy:   req.user.id,
+            submittedBy: req.user.id,
             submitterRole: req.user.role || "admin",
-            userAgent:     ua.slice(0, 300),
+            userAgent: ua.slice(0, 300),
             notes,
           },
         },
@@ -206,10 +206,10 @@ exports.submitResolution = async (req, res, next) => {
       $inc: { resolvedCount: 1, points: 25 },
     });
     await createNotification({
-      userId:      fresh.user,
-      title:       "Your Complaint Has Been Resolved!",
-      message:     `Your complaint "${fresh.title}" has been resolved. Resolution evidence has been published.`,
-      type:        "status_change",
+      userId: fresh.user,
+      title: "Your Complaint Has Been Resolved!",
+      message: `Your complaint "${fresh.title}" has been resolved. Resolution evidence has been published.`,
+      type: "status_change",
       complaintId: fresh._id,
     });
 
@@ -287,9 +287,10 @@ exports.reviewResolution = async (req, res, next) => {
             reviewedBy: req.user.id,
             reviewedAt: now,
             decision,
-            notes:     reviewNote,
+            notes: reviewNote,
           },
         },
+        $unset: decision === "rejected" ? { resolutionFeedback: "" } : {},
         $push: {
           statusHistory: {
             status: newStatus,
@@ -304,13 +305,13 @@ exports.reviewResolution = async (req, res, next) => {
 
     // Notify citizen of outcome
     await createNotification({
-      userId:      complaint.user,
-      title:       decision === "approved" ? "Resolution Verified" : "Resolution Under Re-investigation",
+      userId: complaint.user,
+      title: decision === "approved" ? "Resolution Verified" : "Resolution Under Re-investigation",
       message:
         decision === "approved"
           ? `Your complaint "${complaint.title}" resolution has been approved by a supervisor.`
           : `The resolution for "${complaint.title}" has been rejected by a supervisor and is being re-investigated.`,
-      type:        "status_change",
+      type: "status_change",
       complaintId: complaint._id,
     });
 
@@ -357,26 +358,26 @@ exports.getPublicResolution = async (req, res, next) => {
       integrityStatus = rev === "approved"
         ? "SUSPICIOUS_APPROVED"
         : rev === "rejected"
-        ? "SUSPICIOUS_REJECTED"
-        : "UNDER_REVIEW";
+          ? "SUSPICIOUS_REJECTED"
+          : "UNDER_REVIEW";
     }
 
     return res.json({
       success: true,
-      complaintId:  complaint._id,
-      status:       complaint.status,
-      resolvedAt:   ev.submittedAt,
+      complaintId: complaint._id,
+      status: complaint.status,
+      resolvedAt: ev.submittedAt,
       resolution: {
-        imageUrl:            ev.imageUrl,
-        imageHash:           ev.imageHash,
+        imageUrl: ev.imageUrl,
+        imageHash: ev.imageHash,
         distanceFromOriginM: ev.distanceFromOriginM,
-        isSuspicious:        ev.isSuspicious,
-        suspicionReason:     ev.suspicionReason,
+        isSuspicious: ev.isSuspicious,
+        suspicionReason: ev.suspicionReason,
         integrityStatus,
         // Privacy: return only origin coordinates for map (complaint site), NOT capture coords
-        originCoordinates:   complaint.location?.coordinates || null,
+        originCoordinates: complaint.location?.coordinates || null,
         vicinity,
-        notes:               ev.notes || null,
+        notes: ev.notes || null,
       },
     });
   } catch (err) {

@@ -190,7 +190,7 @@ async function load() {
         icon: L.divIcon({ className:'', html:`<div style="width:14px;height:14px;border-radius:50%;background:${sColor};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>`, iconSize:[14,14], iconAnchor:[7,7] })
       }).addTo(dm).bindPopup(c.title).openPopup();
     }
-    return c.status; // pass status to caller
+    return { status: c.status, isOwner }; // pass status and owner to caller
   } catch(err) {
     document.getElementById('loadingState').innerHTML = `
       <div class="detail-error">
@@ -220,17 +220,18 @@ async function toggleVote() {
 
 // ── TRS: load public resolution evidence after main complaint renders ─────────
 async function loadResolutionEvidence(complaintStatus) {
-  if (complaintStatus !== 'resolved') return;
+  if (complaintStatus !== 'resolved') return false;
   const section = document.getElementById('resolutionEvidenceSection');
-  if (!section) return;
+  if (!section) return false;
   try {
     const resp = await fetch(`/api/complaints/${id}/resolution/public`);
-    if (!resp.ok) return; // no evidence yet — silently skip
+    if (!resp.ok) return false; // no evidence yet — silently skip
     const d = await resp.json();
-    if (!d.success || !d.resolution) return;
+    if (!d.success || !d.resolution) return false;
     const ev = d.resolution;
     renderEvidencePanel(section, ev, d.resolvedAt);
-  } catch(e) { /* non-critical — don't break the page */ }
+    return true;
+  } catch(e) { return false; /* non-critical — don't break the page */ }
 }
 
 function renderEvidencePanel(container, ev, resolvedAt) {
@@ -302,9 +303,163 @@ function renderEvidencePanel(container, ev, resolvedAt) {
 
 // Single entry-point: render complaint then lazy-load TRS evidence panel
 async function loadWithEvidence() {
-  const status = await load();
-  if (status === 'resolved') {
-    setTimeout(() => loadResolutionEvidence('resolved'), 300);
+  const result = await load();
+  if (result.status === 'resolved') {
+    setTimeout(async () => {
+      const hasEvidence = await loadResolutionEvidence('resolved');
+      if (hasEvidence && result.isOwner) {
+        loadFeedbackCard();
+      }
+    }, 300);
+  }
+}
+
+// ── Citizen Feedback Logic ──────────────────────────────────────────────
+const escapeHTML = (str) => String(str||'').replace(/[&<>'"]/g, tag => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+}[tag] || tag));
+
+let currentRating = 0;
+
+async function loadFeedbackCard() {
+  const rightCol = document.querySelector('.detail-right');
+  if (!rightCol) return;
+  
+  const container = document.createElement('div');
+  container.id = 'feedbackContainer';
+  rightCol.appendChild(container);
+
+  try {
+    const res = await window.NIRVAAH.Complaints.getFeedback(id);
+    if (res && res.success && res.feedback) {
+      renderFeedbackSummary(container, res.feedback);
+    }
+  } catch (e) {
+    if (e.status === 404) {
+      renderFeedbackForm(container);
+    }
+  }
+}
+
+function renderFeedbackSummary(container, fb) {
+  container.innerHTML = `
+    <div class="detail-feedback-card">
+      <div class="detail-feedback-title">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.514"></path></svg>
+        Citizen Feedback
+      </div>
+      <div class="detail-feedback-subtitle">Thank you for sharing your experience.</div>
+      <div class="detail-feedback-summary-row">
+        <span class="detail-feedback-summary-lbl">Rating</span>
+        <span class="detail-feedback-rating-display">${'★'.repeat(fb.rating)}${'☆'.repeat(5 - fb.rating)}</span>
+      </div>
+      <div class="detail-feedback-summary-row">
+        <span class="detail-feedback-summary-lbl">Satisfied?</span>
+        <span class="detail-feedback-summary-val">${fb.isSatisfied ? 'Yes, issue fully resolved' : 'No, needs more work'}</span>
+      </div>
+      ${fb.comment ? `
+      <div class="detail-feedback-summary-row" style="flex-direction:column; align-items:flex-start; margin-top:6px; border-top:1px solid #EDE4D8; padding-top:6px;">
+        <span class="detail-feedback-summary-lbl">Comment</span>
+        <span class="detail-feedback-summary-val" style="margin-top:4px; max-width:100%; text-align:left; font-weight:normal; font-size:0.8rem">${escapeHTML(fb.comment)}</span>
+      </div>` : ''}
+    </div>
+  `;
+}
+
+function renderFeedbackForm(container) {
+  container.innerHTML = `
+    <div class="detail-feedback-card">
+      <div class="detail-feedback-title">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+        Rate this Resolution
+      </div>
+      <div class="detail-feedback-subtitle">As the reporter, please let us know how we did.</div>
+      
+      <div class="detail-feedback-group">
+        <label class="detail-feedback-label">Your Rating (1-5)</label>
+        <div class="detail-feedback-stars" id="fbStars">
+          <span class="detail-feedback-star" data-val="1">★</span>
+          <span class="detail-feedback-star" data-val="2">★</span>
+          <span class="detail-feedback-star" data-val="3">★</span>
+          <span class="detail-feedback-star" data-val="4">★</span>
+          <span class="detail-feedback-star" data-val="5">★</span>
+        </div>
+      </div>
+
+      <div class="detail-feedback-group">
+        <label class="detail-feedback-label">Are you satisfied with the result?</label>
+        <div class="detail-feedback-toggle">
+          <label><input type="radio" name="fbSatisfied" value="true" checked> Yes</label>
+          <label><input type="radio" name="fbSatisfied" value="false"> No</label>
+        </div>
+      </div>
+
+      <div class="detail-feedback-group">
+        <label class="detail-feedback-label">Additional Comments (Optional)</label>
+        <textarea id="fbComment" class="detail-feedback-input" rows="2" placeholder="Tell us more about your experience..."></textarea>
+      </div>
+
+      <button id="fbSubmitBtn" class="detail-feedback-submit" onclick="submitFeedbackForm()">Submit Feedback</button>
+    </div>
+  `;
+
+  const stars = document.querySelectorAll('.detail-feedback-star');
+  stars.forEach(s => {
+    s.addEventListener('mouseover', function() {
+      const val = parseInt(this.dataset.val);
+      stars.forEach(st => {
+        if (parseInt(st.dataset.val) <= val) st.style.color = '#D4A373';
+        else st.style.color = '#DDD0C0';
+      });
+    });
+    s.addEventListener('mouseout', function() {
+      stars.forEach(st => {
+        if (parseInt(st.dataset.val) <= currentRating) st.style.color = '#D4A373';
+        else st.style.color = '#DDD0C0';
+      });
+    });
+    s.addEventListener('click', function() {
+      currentRating = parseInt(this.dataset.val);
+      stars.forEach(st => {
+        if (parseInt(st.dataset.val) <= currentRating) {
+          st.classList.add('selected');
+          st.style.color = '#D4A373';
+        } else {
+          st.classList.remove('selected');
+          st.style.color = '#DDD0C0';
+        }
+      });
+    });
+  });
+}
+
+async function submitFeedbackForm() {
+  if (currentRating === 0) {
+    showToast('Error', 'Please select a rating from 1 to 5 stars.', 'error');
+    return;
+  }
+  const btn = document.getElementById('fbSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  const isSatisfied = document.querySelector('input[name="fbSatisfied"]:checked').value === 'true';
+  const comment = document.getElementById('fbComment').value.trim();
+
+  try {
+    const res = await window.NIRVAAH.Complaints.submitFeedback(id, {
+      rating: currentRating,
+      isSatisfied,
+      comment
+    });
+    if (res.success) {
+      showToast('Thank You!', 'Your feedback helps us improve.', 'success');
+      const container = document.getElementById('feedbackContainer');
+      renderFeedbackSummary(container, res.feedback);
+    }
+  } catch (e) {
+    showToast('Error', e.message || 'Failed to submit feedback.', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Submit Feedback';
   }
 }
 
