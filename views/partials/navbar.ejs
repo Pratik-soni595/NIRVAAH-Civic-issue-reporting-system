@@ -20,7 +20,7 @@
         <svg class="emblem" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
             style="width:20px;height:20px;fill:var(--accent)">
             <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.5" />
-            <circle cx="12" cy="12" r="3" fill="currentColor" />
+            <circle cx="12" cy="12" r="mainHeader3" fill="currentColor" />
             <line x1="12" y1="2" x2="12" y2="7" stroke="currentColor" stroke-width="1.2" />
             <line x1="12" y1="17" x2="12" y2="22" stroke="currentColor" stroke-width="1.2" />
             <line x1="2" y1="12" x2="7" y2="12" stroke="currentColor" stroke-width="1.2" />
@@ -50,7 +50,7 @@
 <!-- ═══════════════════════════════════════════════════════
      MAIN HEADER — Brand + Login + e-Services
 ════════════════════════════════════════════════════════ -->
-<header class="main-header" id="mainHeader">
+<header class="main-header" id="">
     <div class="main-header-inner">
         <!-- Brand -->
         <a href="/" class="header-brand" aria-label="NIRVAAH Home">
@@ -79,7 +79,7 @@
                     <a href="/login" class="btn btn-outline btn-sm" id="headerLoginBtn">
                         <%= __('login') || 'Login' %>
                     </a>
-                    <a href="/register" class="btn btn-accent btn-sm" id="headerEservicesBtn">Register</a>
+                    <a href="/register" class="btn btn-accent btn-sm" id="headerRegisterBtn">Register</a>
                     <% } %>
         </div>
     </div>

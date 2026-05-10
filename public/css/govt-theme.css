@@ -462,7 +462,7 @@ textarea:focus-visible {
 /* ── 8. OFFLINE BANNER ──────────────────────────────────── */
 .offline-banner {
   position: fixed;
-  top: 170px;
+  top: 140px;
   left: 0;
   right: 0;
   z-index: 1050;
@@ -1179,6 +1179,15 @@ footer {
   .stats-strip-inner {
     grid-template-columns: 1fr 1fr;
   }
+  .main-header {
+    padding: 0px 0.4rem;
+  }
+  #headerLoginBtn {
+    padding: 0.3rem 0.5rem;
+  }
+  #headerRegisterBtn {
+    padding: 0.3rem 0.5rem;
+  }
 }
 
 /* Admin Header */
@@ -1553,9 +1562,9 @@ tbody tr:hover td {
 
 /* ── 36. OFFLINE BANNER position accounting for 3-bar header */
 /* Already set in responsive rules, but ensure base is correct */
-.offline-banner {
+/* .offline-banner {
   top: 170px;
-}
+} */
 
 /* ── 37. SCROLLBAR — maroon accent ───────────────────────── */
 ::-webkit-scrollbar {
@@ -1603,12 +1612,13 @@ tbody tr:hover td {
     margin-top: 0;
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 4px 0 24px rgba(0,0,0,0.15) !important;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15) !important;
   }
   .admin-sidebar.open {
     transform: translateX(0);
   }
-  .admin-close-toggle, .admin-nav-toggle {
+  .admin-close-toggle,
+  .admin-nav-toggle {
     display: block !important;
   }
   .admin-main {
@@ -1616,6 +1626,7 @@ tbody tr:hover td {
     width: 100vw;
   }
 }
-.admin-close-toggle, .admin-nav-toggle {
+.admin-close-toggle,
+.admin-nav-toggle {
   display: none;
 }
